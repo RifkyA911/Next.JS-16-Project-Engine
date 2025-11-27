@@ -28,3 +28,15 @@ export const truncateString = (str: string, num: number): string => {
   }
   return str.slice(0, num) + "...";
 };
+
+export function lowercaseKeys<T extends Record<string, any>>(obj: T): T {
+  const newObj: Record<string, any> = {};
+  Object.keys(obj).forEach((key) => {
+    newObj[key.toLowerCase()] = obj[key];
+  });
+  return newObj as T;
+}
+
+export function lowercaseArray<T extends Record<string, any>>(arr: T[]): T[] {
+  return arr.map(lowercaseKeys);
+}
