@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { FileUpload } from "@/components/ui/file-upload";
 
 export type FieldConfig = {
   name: string;
@@ -120,17 +121,15 @@ export function DynamicDialogForm({
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
                   placeholder={fieldConfig.placeholder}
-                  className={`min-h-[100px] resize-none ${
-                    hasError ? "border-destructive" : ""
-                  }`}
+                  className={`min-h-[100px] resize-none ${hasError ? "border-destructive" : ""
+                    }`}
                   disabled={isSubmitting}
                 />
               ) : fieldConfig.type === "file" ? (
                 <div className="space-y-2">
                   <div
-                    className={`border-2 border-dashed rounded-md p-6 hover-elevate transition-colors ${
-                      hasError ? "border-destructive" : "border-input"
-                    }`}
+                    className={`border-2 border-dashed rounded-md p-6 hover-elevate transition-colors ${hasError ? "border-destructive" : "border-input"
+                      }`}
                   >
                     <Input
                       id={fieldConfig.name}
@@ -145,6 +144,12 @@ export function DynamicDialogForm({
                       className="cursor-pointer"
                       disabled={isSubmitting}
                     />
+                    <div className="w-full max-w-4xl mx-auto min-h-96 border border-dashed bg-white dark:bg-black border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <FileUpload onChange={(files?: File[] | null) => {
+                        const file = files?.[0];
+                        field.handleChange(file || null);
+                      }} />
+                    </div>
                   </div>
                   {field.state.value && (
                     <p className="text-sm text-muted-foreground mt-2">
