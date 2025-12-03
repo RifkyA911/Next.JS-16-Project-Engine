@@ -294,9 +294,9 @@ export function DataTableExample() {
 							},
 						]}
 						emptyMessage="No products found."
-						striped={true}
-						hoverable={true}
-						stickyHeader={true}
+						isStriped={true}
+						isHoverable={true}
+						isStickyHeader={true}
 					/>
 				</div>
 
@@ -336,8 +336,8 @@ export function DataTableExample() {
 						pageSize={3}
 						className="border-2 border-primary/20 p-4"
 						emptyMessage="No products in this category."
-						striped={false}
-						hoverable={true}
+						isStriped={false}
+						isHoverable={true}
 					/>
 				</div>
 
@@ -355,8 +355,8 @@ export function DataTableExample() {
 						enableSorting={false}
 						enableFiltering={false}
 						enablePagination={false}
-						striped={true}
-						hoverable={false}
+						isStriped={true}
+						isHoverable={false}
 					/>
 				</div>
 			</div>

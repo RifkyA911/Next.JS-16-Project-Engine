@@ -40,6 +40,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useReactTableData } from "@/hooks/use-react-table";
 import ReactTableSkeleton from "../../loaders/react-table";
+import { debounce } from "@/utils/async";
 
 interface DataTableProps<TData, TValue> {
 	tableName?: string; // for zustand table store
@@ -64,10 +65,11 @@ interface DataTableProps<TData, TValue> {
 		variant?: "default" | "destructive";
 	}>;
 	emptyMessage?: string;
-	loading?: boolean;
-	stickyHeader?: boolean;
-	striped?: boolean;
-	hoverable?: boolean;
+	isLoading?: boolean;
+	isStickyHeader?: boolean;
+	isStriped?: boolean;
+	isHoverable?: boolean;
+	loadingComponent?: React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -88,10 +90,11 @@ export function DataTable<TData, TValue>({
 	onRowAction,
 	rowActions = [],
 	emptyMessage = "No results found.",
-	loading = false,
-	stickyHeader = false,
-	striped = false,
-	hoverable = true,
+	isLoading = false,
+	isStickyHeader = false,
+	isStriped = false,
+	isHoverable = true,
+	loadingComponent = undefined
 }: DataTableProps<TData, TValue>) {
 	const [globalSearch, setGlobalSearch] = React.useState("");
 	const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -292,7 +295,18 @@ export function DataTable<TData, TValue>({
 
 	const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-	if (loading) {
+	// const debouncedGoToPage = React.useMemo(
+	// 	() =>
+	// 		debounce((page: number) => {
+	// 			table.setPageIndex(page); // - 1); karena UI 1-based
+	// 		}, 0.5),
+	// 	[table]
+	// );
+
+	if (isLoading) {
+		if (loadingComponent) {
+			return <>{loadingComponent}</>;
+		}
 		return <ReactTableSkeleton columns={columns.length} rows={5} />;
 	}
 
@@ -384,7 +398,7 @@ export function DataTable<TData, TValue>({
 				<Table>
 					<TableHeader
 						className={cn(
-							stickyHeader && "sticky top-0 z-10 bg-background"
+							isStickyHeader && "sticky top-0 z-1 bg-background"
 						)}
 					>
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -406,7 +420,7 @@ export function DataTable<TData, TValue>({
 						))}
 					</TableHeader>
 					<TableBody>
-						{loading ? (
+						{isLoading ? (
 							<TableRow>
 								<TableCell
 									colSpan={enhancedColumns.length}
@@ -414,7 +428,7 @@ export function DataTable<TData, TValue>({
 								>
 									<div className="flex items-center justify-center">
 										<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-										<span className="ml-2">Loading...</span>
+										<span className="ml-2">isLoading...</span>
 									</div>
 								</TableCell>
 							</TableRow>
@@ -426,10 +440,10 @@ export function DataTable<TData, TValue>({
 										row.getIsSelected() && "selected"
 									}
 									className={cn(
-										striped &&
+										isStriped &&
 										index % 2 === 1 &&
 										"bg-muted/25",
-										hoverable && "hover:bg-muted/50",
+										isHoverable && "hover:bg-muted/50",
 										onRowClick && "cursor-pointer"
 									)}
 									onClick={() => onRowClick?.(row)}
@@ -501,8 +515,28 @@ export function DataTable<TData, TValue>({
 						</Button>
 						<div className="flex items-center space-x-1">
 							<span className="text-sm font-medium">
-								Page {table.getState().pagination.pageIndex + 1}{" "}
-								of {table.getPageCount()}
+								Page
+								{/* {table.getState().pagination.pageIndex + 1}{" "} */}
+								<Input
+									type="text"
+									className="w-14 mx-2 text-center"
+									min={1}
+									max={table.getPageCount()}
+									value={table.getState().pagination.pageIndex + 1}
+									onChange={(e) => {
+
+										const page = e.target.value ? Number(e.target.value) - 1 : 0
+
+										if (!isNaN(page)) {
+											// debouncedGoToPage(page);
+											table.setPageIndex(
+												Math.min(Math.max(page, 0), table.getPageCount() - 1)
+											)
+										}
+									}}
+								/>
+								of {' '}
+								{table.getPageCount()}
 							</span>
 						</div>
 						<Button
