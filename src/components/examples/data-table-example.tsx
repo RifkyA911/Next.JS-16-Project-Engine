@@ -206,7 +206,7 @@ function cn(...classes: (string | undefined | null | false)[]): string {
 export function DataTableExample() {
 	// console.log("Rendering DataTableExample component");
 	const [selectedRows, setSelectedRows] = React.useState<Row<Product>[]>([]);
-	const [position, setPosition] = React.useState("bottom")
+	const [position, setPosition] = React.useState("")
 
 	// const originalData = useReactTableStore(state => state.originalData);
 	// const tableState = useReactTableStore((state: any) => state.tables[tableName]) as any;
@@ -268,17 +268,10 @@ export function DataTableExample() {
 		console.log("Selected rows:", rows);
 	};
 
-	const filterActive = () => {
+	const filterStatus = (status: string) => {
 		setFilteredData(
 			tableName,
-			originalData.filter(p => p.status === "active")
-		);
-	};
-
-	const filterInactive = () => {
-		setFilteredData(
-			tableName,
-			originalData.filter(p => p.status === "inactive")
+			originalData.filter(p => p.status === status)
 		);
 	};
 
@@ -322,8 +315,9 @@ export function DataTableExample() {
 											<DropdownMenuLabel>Panel Position</DropdownMenuLabel>
 											<DropdownMenuSeparator />
 											<DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
-												<DropdownMenuRadioItem value="top" onClick={filterActive}>Active</DropdownMenuRadioItem>
-												<DropdownMenuRadioItem value="bottom" onClick={filterInactive}>Inactive</DropdownMenuRadioItem>
+												<DropdownMenuRadioItem value="active" onClick={() => filterStatus('active')}>Active</DropdownMenuRadioItem>
+												<DropdownMenuRadioItem value="inactive" onClick={() => filterStatus('inactive')}>Inactive</DropdownMenuRadioItem>
+												<DropdownMenuRadioItem value="discontinued" onClick={() => filterStatus('discontinued')}>Discontinued</DropdownMenuRadioItem>
 												<DropdownMenuRadioItem value="right" onClick={clearFilter}>Reset</DropdownMenuRadioItem>
 											</DropdownMenuRadioGroup>
 										</DropdownMenuContent>
