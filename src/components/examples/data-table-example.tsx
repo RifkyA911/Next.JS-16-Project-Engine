@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { Edit, Trash2, Eye, FilterIcon } from "lucide-react";
+import { Edit, Trash2, Eye, FilterIcon, Sheet } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,6 +14,8 @@ import {
 import { useReactTableStore } from "@/store/react-table-store";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSubContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
+
+const tableName = "productsTable_1";
 
 // Sample data type
 interface Product {
@@ -206,11 +208,29 @@ export function DataTableExample() {
 	const [selectedRows, setSelectedRows] = React.useState<Row<Product>[]>([]);
 	const [position, setPosition] = React.useState("bottom")
 
-	const originalData = useReactTableStore(state => state.originalData);
+	// const originalData = useReactTableStore(state => state.originalData);
+	// const tableState = useReactTableStore((state: any) => state.tables[tableName]) as any;
+	// const {
+	// 	originalData,
+	// 	setFilteredData,
+	// 	resetTable,
+	// } = tableState || {};
+	const originalData = useReactTableStore(
+		state => state.tables[tableName]?.originalData
+	);
 
-	// React.useEffect(() => {
-	// 	console.log("Current tables state:", originalData);
-	// }, [originalData]);
+	const setFilteredData = useReactTableStore(
+		state => state.setFilteredData
+	);
+
+	const resetTable = useReactTableStore(
+		state => state.resetTable
+	);
+
+
+	React.useEffect(() => {
+		console.log("Current tables state:", originalData);
+	}, [originalData]);
 
 	React.useEffect(() => {
 		const tables = useReactTableStore.getState().tables; // ambil snapshot sekali
@@ -248,6 +268,24 @@ export function DataTableExample() {
 		console.log("Selected rows:", rows);
 	};
 
+	const filterActive = () => {
+		setFilteredData(
+			tableName,
+			originalData.filter(p => p.status === "active")
+		);
+	};
+
+	const filterInactive = () => {
+		setFilteredData(
+			tableName,
+			originalData.filter(p => p.status === "inactive")
+		);
+	};
+
+	const clearFilter = () => {
+		resetTable(tableName); // atau setFilteredData(originalData)
+	};
+
 	return (
 		<div className="container mx-auto py-10">
 			<div className="space-y-4">
@@ -263,7 +301,7 @@ export function DataTableExample() {
 				<div className="space-y-2">
 					<h2 className="text-2xl font-semibold">Basic Data Table</h2>
 					<DataTable
-						tableName="productsTable_1"
+						tableName={tableName}
 						columns={columns}
 						data={sampleData}
 						searchKey={["name", "category"]}
@@ -284,9 +322,9 @@ export function DataTableExample() {
 											<DropdownMenuLabel>Panel Position</DropdownMenuLabel>
 											<DropdownMenuSeparator />
 											<DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
-												<DropdownMenuRadioItem value="top">Top</DropdownMenuRadioItem>
-												<DropdownMenuRadioItem value="bottom">Bottom</DropdownMenuRadioItem>
-												<DropdownMenuRadioItem value="right">Right</DropdownMenuRadioItem>
+												<DropdownMenuRadioItem value="top" onClick={filterActive}>Active</DropdownMenuRadioItem>
+												<DropdownMenuRadioItem value="bottom" onClick={filterInactive}>Inactive</DropdownMenuRadioItem>
+												<DropdownMenuRadioItem value="right" onClick={clearFilter}>Reset</DropdownMenuRadioItem>
 											</DropdownMenuRadioGroup>
 										</DropdownMenuContent>
 									</DropdownMenu>
@@ -294,9 +332,11 @@ export function DataTableExample() {
 							},
 							{
 								id: "filter",
-								anchor: "after-search",
+								anchor: "after-columns",
 								order: 1,
-								render: () => <div>IMGOOOODO</div>
+								render: () => <div><Button variant="outline" className="h-8 w-8 p-0">
+									<Sheet className="h-4 w-4" />
+								</Button></div>
 							}
 						]}
 						enableRowSelection={true}
