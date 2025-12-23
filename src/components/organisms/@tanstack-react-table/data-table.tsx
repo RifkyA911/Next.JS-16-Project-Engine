@@ -40,7 +40,26 @@ import {
 import { cn } from "@/lib/utils";
 import { useReactTableData } from "@/hooks/use-react-table";
 import ReactTableSkeleton from "../../loaders/react-table";
-import { debounce } from "@/utils/async";
+// import { debounce } from "@/utils/async";
+
+type ToolbarAnchor =
+	| "left"
+	// | "before-search"
+	| "after-search"
+	// | "before-columns"
+	| "after-columns"
+	| "right"
+
+interface DataTableToolbarAction<TData> {
+	id: string
+	anchor?: ToolbarAnchor // default: "end"
+	order?: number
+	render: React.ReactNode | ((ctx: {
+		tableName: string
+		selectedRows: Row<TData>[]
+		clearSelection: () => void
+	}) => React.ReactNode)
+}
 
 interface DataTableProps<TData, TValue> {
 	tableName?: string; // for zustand table store
@@ -48,10 +67,11 @@ interface DataTableProps<TData, TValue> {
 	data: TData[];
 	searchKey?: keyof TData | Array<keyof TData>;
 	searchPlaceholder?: string;
+	toolbarActions?: DataTableToolbarAction<TData>[];
 	enableRowSelection?: boolean;
 	enableColumnVisibility?: boolean;
 	enableSorting?: boolean;
-	enableFiltering?: boolean;
+	enableSearch?: boolean;
 	enablePagination?: boolean;
 	pageSize?: number;
 	className?: string;
@@ -78,10 +98,11 @@ export function DataTable<TData, TValue>({
 	data,
 	searchKey,
 	searchPlaceholder = "Search...",
+	toolbarActions = [],
 	enableRowSelection = true,
 	enableColumnVisibility = true,
 	enableSorting = true,
-	enableFiltering = true,
+	enableSearch = true,
 	enablePagination = true,
 	pageSize = 10,
 	className,
@@ -256,6 +277,24 @@ export function DataTable<TData, TValue>({
 		return cols;
 	}, [columns, enableRowSelection, rowActions, onRowAction]);
 
+	const renderToolbarActions = (anchor: ToolbarAnchor) =>
+		toolbarActions
+			.filter(action => action.anchor === anchor)
+			.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+			.map(action => (
+				<React.Fragment key={action.id}>
+					{typeof action.render === "function"
+						? action.render({
+							tableName,
+							selectedRows,
+							clearSelection: () =>
+								table.toggleAllPageRowsSelected(false),
+						})
+						: action.render}
+				</React.Fragment>
+			))
+
+
 	const table = useReactTable({
 		data: filteredDataZustand, // ?? filteredData,
 		columns: enhancedColumns,
@@ -279,7 +318,7 @@ export function DataTable<TData, TValue>({
 			},
 		},
 		enableSorting,
-		enableFilters: enableFiltering,
+		enableFilters: enableSearch,
 	});
 
 	// Handle row selection changes
@@ -327,7 +366,7 @@ export function DataTable<TData, TValue>({
 			<div className="flex items-center justify-between">
 				<div className="flex flex-1 items-center space-x-2">
 					{/* Search */}
-					{/* {enableFiltering && searchKey && (
+					{/* {enableSearch && searchKey && (
 						<Input
 							placeholder={searchPlaceholder}
 							value={
@@ -343,7 +382,8 @@ export function DataTable<TData, TValue>({
 							className="h-8 w-[150px] lg:w-[250px]"
 						/>
 					)} */}
-					{enableFiltering && (
+					{renderToolbarActions("left")}
+					{enableSearch && (
 						<Input
 							placeholder={searchPlaceholder}
 							value={globalSearch}
@@ -351,6 +391,7 @@ export function DataTable<TData, TValue>({
 							className="h-8 w-[150px] lg:w-[250px]"
 						/>
 					)}
+					{renderToolbarActions("after-search")}
 
 					{/* Selected rows info */}
 					{enableRowSelection && selectedRows.length > 0 && (
@@ -362,35 +403,39 @@ export function DataTable<TData, TValue>({
 					)}
 				</div>
 
-				{/* Column visibility */}
-				{enableColumnVisibility && (
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="outline" className="ml-auto">
-								Columns <ChevronDown className="ml-2 h-4 w-4" />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							{table
-								.getAllColumns()
-								.filter((column) => column.getCanHide())
-								.map((column) => {
-									return (
-										<DropdownMenuCheckboxItem
-											key={column.id}
-											className="capitalize"
-											checked={column.getIsVisible()}
-											onCheckedChange={(value) =>
-												column.toggleVisibility(!!value)
-											}
-										>
-											{column.id}
-										</DropdownMenuCheckboxItem>
-									);
-								})}
-						</DropdownMenuContent>
-					</DropdownMenu>
-				)}
+				<div className="flex items-center space-x-2">
+					{renderToolbarActions("after-columns")}
+					{/* Column visibility */}
+					{enableColumnVisibility && (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="outline" className="ml-auto">
+									Columns <ChevronDown className="ml-2 h-4 w-4" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								{table
+									.getAllColumns()
+									.filter((column) => column.getCanHide())
+									.map((column) => {
+										return (
+											<DropdownMenuCheckboxItem
+												key={column.id}
+												className="capitalize"
+												checked={column.getIsVisible()}
+												onCheckedChange={(value) =>
+													column.toggleVisibility(!!value)
+												}
+											>
+												{column.id}
+											</DropdownMenuCheckboxItem>
+										);
+									})}
+							</DropdownMenuContent>
+						</DropdownMenu>
+					)}
+					{renderToolbarActions("right")}
+				</div>
 			</div>
 
 			{/* Table */}

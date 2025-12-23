@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { Edit, Trash2, Eye } from "lucide-react";
+import { Edit, Trash2, Eye, FilterIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,6 +12,8 @@ import {
 	// createFilterableColumn,
 } from "@/components/organisms/@tanstack-react-table/data-table";
 import { useReactTableStore } from "@/store/react-table-store";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSubContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Button } from "../ui/button";
 
 // Sample data type
 interface Product {
@@ -202,6 +204,7 @@ function cn(...classes: (string | undefined | null | false)[]): string {
 export function DataTableExample() {
 	// console.log("Rendering DataTableExample component");
 	const [selectedRows, setSelectedRows] = React.useState<Row<Product>[]>([]);
+	const [position, setPosition] = React.useState("bottom")
 
 	const originalData = useReactTableStore(state => state.originalData);
 
@@ -265,10 +268,41 @@ export function DataTableExample() {
 						data={sampleData}
 						searchKey={["name", "category"]}
 						searchPlaceholder="Search products..."
+						toolbarActions={[
+							{
+								id: "filter",
+								anchor: "left",
+								order: 1,
+								render: () => (
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<Button variant="outline" className="h-8 w-8 p-0">
+												<FilterIcon className="h-4 w-4" />
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent className="w-56" align="start">
+											<DropdownMenuLabel>Panel Position</DropdownMenuLabel>
+											<DropdownMenuSeparator />
+											<DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
+												<DropdownMenuRadioItem value="top">Top</DropdownMenuRadioItem>
+												<DropdownMenuRadioItem value="bottom">Bottom</DropdownMenuRadioItem>
+												<DropdownMenuRadioItem value="right">Right</DropdownMenuRadioItem>
+											</DropdownMenuRadioGroup>
+										</DropdownMenuContent>
+									</DropdownMenu>
+								)
+							},
+							{
+								id: "filter",
+								anchor: "after-search",
+								order: 1,
+								render: () => <div>IMGOOOODO</div>
+							}
+						]}
 						enableRowSelection={true}
 						enableColumnVisibility={true}
 						enableSorting={true}
-						enableFiltering={true}
+						enableSearch={true}
 						enablePagination={true}
 						pageSize={5}
 						// loading={true}
@@ -331,7 +365,7 @@ export function DataTableExample() {
 						enableRowSelection={false}
 						enableColumnVisibility={false}
 						enableSorting={true}
-						enableFiltering={true}
+						enableSearch={true}
 						enablePagination={true}
 						pageSize={3}
 						className="border-2 border-primary/20 p-4"
@@ -353,7 +387,7 @@ export function DataTableExample() {
 						enableRowSelection={false}
 						enableColumnVisibility={false}
 						enableSorting={false}
-						enableFiltering={false}
+						enableSearch={false}
 						enablePagination={false}
 						isStriped={true}
 						isHoverable={false}

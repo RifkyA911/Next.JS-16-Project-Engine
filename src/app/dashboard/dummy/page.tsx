@@ -123,14 +123,14 @@ const columns: ColumnDef<Product>[] = [
             <div className="font-medium">{getValue() as string}</div>
         )
     ),
-    createSortableColumn<Product>(
-        "name",
-        "Product Name",
-        "name",
-        ({ getValue }) => (
-            <div className="font-medium">{getValue() as string}</div>
-        )
-    ),
+    // createSortableColumn<Product>(
+    //     "name",
+    //     "Product Name",
+    //     "name",
+    //     ({ getValue }) => (
+    //         <div className="font-medium">{getValue() as string}</div>
+    //     )
+    // ),
     // Category column
     createColumn<Product>(
         "category",
@@ -268,7 +268,7 @@ export function DataTableExample() {
                     <h2 className="text-xl font-semibold">Basic Data Table</h2>
                     <DataTable
                         // className="w-full"
-                        isLoading={true}
+                        isLoading={false}
                         tableName="productsTable_1"
                         columns={columns}
                         data={sampleData}
@@ -277,7 +277,7 @@ export function DataTableExample() {
                         enableRowSelection={true}
                         enableColumnVisibility={true}
                         enableSorting={true}
-                        enableFiltering={true}
+                        enableSearch={true}
                         enablePagination={true}
                         pageSize={5}
                         // loading={true}
