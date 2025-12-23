@@ -35,22 +35,26 @@ export const useReactTableStore = create<TableStore>((set) => ({
   originalData: [],
   filteredData: [],
 
-setOriginalData: (tableName, data) =>
-  set((state) => {
-    const table = state.tables[tableName];
-    if (table && table.originalData === data) return state; // data sama, skip update
+  setOriginalData: (tableName, data) =>
+    set((state) => {
+      const table = state.tables[tableName];
+      if (table && table.originalData === data) return state; // data sama, skip update
 
-    return {
-      tables: {
-        ...state.tables,
-        [tableName]: {
-          ...(table || { originalData: [], filteredData: [], selectedRows: [], selectedCols: [] }),
-          originalData: data,
+      return {
+        tables: {
+          ...state.tables,
+          [tableName]: {
+            ...(table || {
+              originalData: [],
+              filteredData: [],
+              selectedRows: [],
+              selectedCols: [],
+            }),
+            originalData: data,
+          },
         },
-      },
-    };
-  }),
-
+      };
+    }),
 
   setFilteredData: (tableName, data) =>
     set((state) => ({
@@ -129,17 +133,22 @@ setOriginalData: (tableName, data) =>
     }),
 
   resetTable: (tableName) =>
-    set((state) => ({
-      tables: {
-        ...state.tables,
-        [tableName]: {
-          originalData: [],
-          filteredData: [],
-          selectedRows: [],
-          selectedCols: [],
+    set((state) => {
+      const table = state.tables[tableName];
+      if (!table) return state;
+
+      return {
+        tables: {
+          ...state.tables,
+          [tableName]: {
+            ...table,
+            filteredData: table.originalData,
+            selectedRows: [],
+            selectedCols: [],
+          },
         },
-      },
-    })),
+      };
+    }),
 
   resetAll: () => set({ tables: {} }),
 }));
