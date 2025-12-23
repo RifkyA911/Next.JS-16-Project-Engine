@@ -141,7 +141,9 @@ export function DataTable<TData, TValue>({
 		//   clearSelectedCols,
 	} = useReactTableData(tableName);
 
-	const memoData = React.useMemo(() => data, [JSON.stringify(data)]);
+	// memoize data reference; use simple dependency to satisfy react-hooks rule
+	// const memoData = React.useMemo(() => data, [JSON.stringify(data)]);
+	const memoData = React.useMemo(() => data, [data]);
 
 	const isInvalid =
 		!memoData ||
@@ -194,6 +196,10 @@ export function DataTable<TData, TValue>({
 	React.useEffect(() => {
 		setFilteredData(filteredData);
 	}, [filteredData])
+
+	// React.useEffect(() => {
+	// 	console.log('filteredZustand', filteredDataZustand)
+	// }, [filteredDataZustand]);
 
 	// Enhanced columns with row selection and actions
 	const enhancedColumns = React.useMemo(() => {
