@@ -8,14 +8,35 @@ type UnauthorizedBehavior = "returnNull" | "throw";
 // ---------------------------------- Get Fetcher ----------------------------------
 interface GetQueryFnOptions {
   on401?: UnauthorizedBehavior;
+  withCredentials?: boolean; // if need to send cookies
+  baseUrlOverride?: string; // if custom another BASE_API_URL
 }
+
 export const getQueryFn = <T = unknown>(
   options?: GetQueryFnOptions
 ): QueryFunction<T> => {
-  const { on401: unauthorizedBehavior } = options ?? {};
+  const {
+    on401: unauthorizedBehavior,
+    baseUrlOverride,
+    withCredentials = false,
+  } = options ?? {};
+
   return async ({ queryKey, signal }) => {
-    const res = await fetch(joinUrl(BASE_API_URL, queryKey), {
-      credentials: "include",
+    const [path, params] = Array.isArray(queryKey)
+      ? [queryKey[0], queryKey[1]]
+      : [queryKey];
+
+    const base = baseUrlOverride ?? BASE_API_URL;
+    const url = new URL(path as string, base);
+
+    if (params && typeof params === "object") {
+      Object.entries(params as Record<string, string | number>).forEach(
+        ([k, v]) => url.searchParams.append(k, String(v))
+      );
+    }
+
+    const res = await fetch(url.toString(), {
+      credentials: withCredentials ? "include" : "omit",
       signal,
     });
 
