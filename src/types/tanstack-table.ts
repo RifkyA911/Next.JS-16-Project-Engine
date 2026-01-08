@@ -24,7 +24,7 @@ export interface DataTableToolbarAction<TData> {
       }) => React.ReactNode);
 }
 
-export type SortOrder = "ASC" | "DESC" | null;
+export type SortOrder = "ASC" | "DESC" | "asc" | "desc" | null;
 export interface DataTableQuery {
   page: number; // 1-based (UI)
   limit: number; // page size
@@ -35,4 +35,15 @@ export interface DataTableQuery {
   search?: string;
   sortBy?: string;
   sortOrder?: SortOrder;
+}
+
+export interface APIResponsePagination<TData> {
+  data: TData[];
+  meta: {
+    page: number;
+    limit: number;
+    offset: number;
+    totalPage: number;
+    lastPage: number;
+  };
 }
