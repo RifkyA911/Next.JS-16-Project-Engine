@@ -1,3 +1,12 @@
+import { QueryKey } from "@tanstack/react-query";
+
+export const getPath = (queryKey: QueryKey) => {
+  if (Array.isArray(queryKey) && typeof queryKey[0] === "string") {
+    return queryKey[0];
+  }
+  return String(queryKey);
+};
+
 export function joinUrl(
   base: string,
   parts: (string | number)[] | readonly unknown[]
