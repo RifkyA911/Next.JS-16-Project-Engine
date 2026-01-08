@@ -18,7 +18,7 @@ export default async function DashboardLayout({
         <ReactQueryProvider>
             <SidebarProvider>
                 <DashboardSidebar />
-                <div className="flex h-screen overflow-hidden w-full">
+                <div className="flex h-screen overflow-x-hidden w-full">
                     <div className="flex flex-col flex-1 min-w-0 ">
                         <DashboardNavbar />
                         <DashboardContainer>
