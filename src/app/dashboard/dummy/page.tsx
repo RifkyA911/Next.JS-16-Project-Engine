@@ -12,6 +12,7 @@ import {
     // createFilterableColumn,
 } from "@/components/organisms/@tanstack-react-table/data-table";
 import { useReactTableStore } from "@/store/react-table-store";
+import { cn } from "@/lib/utils";
 
 // Sample data type
 interface Product {
@@ -202,9 +203,9 @@ const columns: ColumnDef<Product>[] = [
 ];
 
 // Helper function for className
-function cn(...classes: (string | undefined | null | false)[]): string {
-    return classes.filter(Boolean).join(" ");
-}
+// function cn(...classes: (string | undefined | null | false)[]): string {
+//     return classes.filter(Boolean).join(" ");
+// }
 
 export function DataTableExample() {
     // console.log("Rendering DataTableExample component");
@@ -263,9 +264,9 @@ export function DataTableExample() {
                     </p>
                 </div>
 
-                {/* Basic Data Table */}
+                {/* ------------------------- (Client Side) Basic Data Table -------------------------*/}
                 <div className="space-y-2">
-                    <h2 className="text-xl font-semibold">Basic Data Table</h2>
+                    <h2 className="text-xl font-semibold">Basic Data Table (Client Side)</h2>
                     <DataTable
                         // className="w-full"
                         isLoading={false}
@@ -325,6 +326,7 @@ export function DataTableExample() {
                         </div>
                     </div>
                 )}
+
             </div>
         </div>
     );
