@@ -612,7 +612,7 @@ export function DataTable<TData, TValue>({
 							onChange={(e) => {
 								const size = Number(e.target.value);
 								if (isServerSide) {
-									onPageChange?.(1, size);  // optional: reset ke page 1
+									onPageChange?.(size ?? 1);  // optional: reset ke page 1
 								} else {
 									table.setPageSize(size);
 								}
