@@ -40,31 +40,16 @@ import {
 import { cn } from "@/lib/utils";
 import { useReactTableData } from "@/hooks/use-react-table";
 import ReactTableSkeleton from "../../loaders/react-table";
+import { DataTableQuery, DataTableToolbarAction, ToolbarAnchor } from "@/types/tanstack-table";
 // import { debounce } from "@/utils/async";
-
-type ToolbarAnchor =
-	| "left"
-	// | "before-search"
-	| "after-search"
-	// | "before-columns"
-	| "after-columns"
-	| "right"
-
-interface DataTableToolbarAction<TData> {
-	id: string
-	anchor?: ToolbarAnchor // default: "end"
-	order?: number
-	render: React.ReactNode | ((ctx: {
-		tableName: string
-		selectedRows: Row<TData>[]
-		clearSelection: () => void
-	}) => React.ReactNode)
-}
 
 interface DataTableProps<TData, TValue> {
 	tableName?: string; // for zustand table store
+	className?: string;
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
+	pageSize?: number; // default: 10
+	pageOptionSize?: number[]; // default: [10, 20, 30, 40, 50]
 	searchKey?: keyof TData | Array<keyof TData>;
 	searchPlaceholder?: string;
 	toolbarActions?: DataTableToolbarAction<TData>[];
@@ -73,8 +58,22 @@ interface DataTableProps<TData, TValue> {
 	enableSorting?: boolean;
 	enableSearch?: boolean;
 	enablePagination?: boolean;
-	pageSize?: number;
-	className?: string;
+	// ----- Server/Client pagination -----
+	// paginationMode?: PaginationMode; 		// default: "client"
+	// totalRows?: number; 					// ⚠️ required if paginationMode="server"
+	// onFetchData?: (params: {				// ⚠️ required if paginationMode="server"
+	// 	limit: number;						// -- current page size
+	// 	offset: number;						// -- current offset
+	// 	total: number;						// -- current page total count size
+	// 	search: string;
+	// 	sortBy: string;
+	// 	sortOrder: "asc" | "desc" | null;
+	// }) => void;
+	queryOptions?: DataTableQuery;
+	onPreviousPage?: () => void;
+	onNextPage?: () => void;
+	onPageChange?: (page: number) => void;
+	// -----------------------------------
 	onRowClick?: (row: Row<TData>) => void;
 	onRowSelectionChange?: (selectedRows: Row<TData>[]) => void;
 	onRowAction?: (action: string, row: Row<TData>) => void;
@@ -93,10 +92,13 @@ interface DataTableProps<TData, TValue> {
 }
 
 export function DataTable<TData, TValue>({
+	className,
 	tableName = "default", // default table name for zustand
 	columns,
 	data,
 	searchKey,
+	pageSize = 10,
+	pageOptionSize = [10, 20, 30, 40, 50],
 	searchPlaceholder = "Search...",
 	toolbarActions = [],
 	enableRowSelection = true,
@@ -104,8 +106,13 @@ export function DataTable<TData, TValue>({
 	enableSorting = true,
 	enableSearch = true,
 	enablePagination = true,
-	pageSize = 10,
-	className,
+	// paginationMode = "client",
+	// totalRows, 						// ⚠️ required if paginationMode="server"
+	// onFetchData,					// ⚠️ required if paginationMode="server"
+	queryOptions,
+	onPreviousPage,
+	onNextPage,
+	onPageChange,
 	onRowClick,
 	onRowSelectionChange,
 	onRowAction,
@@ -126,6 +133,8 @@ export function DataTable<TData, TValue>({
 	const [rowSelection, setRowSelection] = React.useState<RowSelectionState>(
 		{}
 	);
+
+	const isServerSide: boolean = !!queryOptions;
 
 	const [debouncedSearch] = useDebounce(globalSearch, 500);
 
@@ -304,20 +313,60 @@ export function DataTable<TData, TValue>({
 	const table = useReactTable({
 		data: filteredDataZustand, // ?? filteredData,
 		columns: enhancedColumns,
+		// ===== MODE SWITCH =====
+		manualPagination: isServerSide,
+		manualSorting: isServerSide,
+		manualFiltering: isServerSide,
+		pageCount: isServerSide
+			? queryOptions?.lastPage
+			: undefined,
+		// ===== ROW MODELS =====
+		getCoreRowModel: getCoreRowModel(),
+		...(isServerSide
+			? {}
+			: {
+				getPaginationRowModel: getPaginationRowModel(),
+				getSortedRowModel: getSortedRowModel(),
+				getFilteredRowModel: getFilteredRowModel(),
+			}),
 		onSortingChange: setSorting,
 		onColumnFiltersChange: setColumnFilters,
-		getCoreRowModel: getCoreRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
 		onColumnVisibilityChange: setColumnVisibility,
 		onRowSelectionChange: setRowSelection,
+		// ===== STATE =====
 		state: {
 			sorting,
 			columnFilters,
 			columnVisibility,
 			rowSelection,
+			...(isServerSide && {
+				pagination: {
+					pageIndex: Math.max((queryOptions?.page ?? 1) - 1, 0),
+					pageSize: queryOptions?.limit ?? 10,
+				},
+			}),
 		},
+
+		// ===== SERVER PAGE CHANGE =====
+		onPaginationChange: isServerSide
+			? (updater) => {
+				const old = {
+					pageIndex: queryOptions!.page - 1,
+					pageSize: queryOptions!.limit,
+				}
+
+				const next =
+					typeof updater === "function"
+						? updater(old)
+						: updater
+
+				// kasih tau luar
+				onPageChange?.(next.pageIndex + 1)
+
+				// wajib update ke react-table juga
+				table.setPagination(next)
+			}
+			: undefined,
 		initialState: {
 			pagination: {
 				pageSize,
@@ -326,6 +375,8 @@ export function DataTable<TData, TValue>({
 		enableSorting,
 		enableFilters: enableSearch,
 	});
+
+	console.log('isServerSide', isServerSide);
 
 	// Handle row selection changes
 	React.useEffect(() => {
@@ -548,7 +599,7 @@ export function DataTable<TData, TValue>({
 							}}
 							className="h-8 w-[70px] rounded border border-input bg-background px-2 text-sm"
 						>
-							{[10, 20, 30, 40, 50].map((pageSize) => (
+							{pageOptionSize.map((pageSize) => (
 								<option key={pageSize} value={pageSize}>
 									{pageSize}
 								</option>
@@ -556,10 +607,75 @@ export function DataTable<TData, TValue>({
 						</select>
 					</div>
 					<div className="flex items-center space-x-2">
+						<select
+							value={pageSize}
+							onChange={(e) => {
+								const size = Number(e.target.value);
+								if (isServerSide) {
+									onPageChange?.(1, size);  // optional: reset ke page 1
+								} else {
+									table.setPageSize(size);
+								}
+							}}
+						>
+						</select>
+
+						<Button
+							onClick={() => {
+								if (isServerSide) {
+									onPageChange?.(queryOptions!.page - 1);
+								} else {
+									table.previousPage();
+								}
+							}}
+							disabled={isServerSide
+								? queryOptions!.page <= 1
+								: !table.getCanPreviousPage()}
+						>
+							Previous
+						</Button>
+						<Input
+							value={isServerSide
+								? queryOptions!.page
+								: table.getState().pagination.pageIndex + 1}
+							onChange={(e) => {
+								const val = Number(e.target.value);
+								if (isNaN(val)) return;
+
+								if (isServerSide) {
+									onPageChange?.(
+										Math.min(Math.max(val, 1), queryOptions!.lastPage)
+									);
+								} else {
+									table.setPageIndex(
+										Math.min(Math.max(val - 1, 0), table.getPageCount() - 1)
+									);
+								}
+							}}
+						/>
+
+						<Button
+							onClick={() => {
+								if (isServerSide) {
+									onPageChange?.(queryOptions!.page + 1);
+								} else {
+									table.nextPage();
+								}
+							}}
+							disabled={isServerSide
+								? queryOptions!.page >= queryOptions!.lastPage
+								: !table.getCanNextPage()}
+						>
+							Next
+						</Button>
+
 						<Button
 							variant="outline"
 							size="sm"
-							onClick={() => table.previousPage()}
+							onClick={() => {
+								onPreviousPage?.();
+								table.previousPage();
+							}}
 							disabled={!table.getCanPreviousPage()}
 						>
 							Previous
@@ -593,7 +709,10 @@ export function DataTable<TData, TValue>({
 						<Button
 							variant="outline"
 							size="sm"
-							onClick={() => table.nextPage()}
+							onClick={() => {
+								onNextPage?.();
+								table.nextPage();
+							}}
 							disabled={!table.getCanNextPage()}
 						>
 							Next
