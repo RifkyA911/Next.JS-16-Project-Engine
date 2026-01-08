@@ -134,7 +134,7 @@ export default function UsersList() {
                     enableSorting={true}
                     enableSearch={true}
                     enablePagination={true}
-                    pageSize={5}
+                    pageSize={limit}
                     // loading={true}
                     onRowClick={handleRowClick}
                     onRowSelectionChange={handleRowSelectionChange}
