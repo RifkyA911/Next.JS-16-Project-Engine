@@ -1,9 +1,22 @@
 // types/user.ts
+
+export type UserRoleType =
+  | "superadmin"
+  | "admin"
+  | "manager"
+  | "developer"
+  | "member"
+  | "moderator"
+  | "editor"
+  | "intern"
+  | "guest"
+  | "all";
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRoleType;
 }
 
 export interface UserDto {
@@ -13,13 +26,3 @@ export interface UserDto {
   role: string;
   password?: string;
 }
-
-export type UsersResponse = User[];
-
-export interface UsersApiResponse {
-  data: User[];
-  total: number;
-}
-
-export type UserId = string;
-export type UserType = "admins" | "editors" | "users";
