@@ -1,10 +1,12 @@
 import { chain } from "@nimpl/middleware-chain";
 import { accessPageMiddleware, authMiddleware } from "./middlewares/auth";
+import { robotConfig } from "./middlewares/robot";
 
 export default chain(
   [
     [authMiddleware, { include: /^\/(dashboard|admin)(\/.*)?$/ }],
     [accessPageMiddleware, { include: /^\/(auth)(\/.*)?$/ }],
+    [robotConfig, { include: /^\/(dashboard|admin)(\/.*)?$/ }],
     // [
     //   logMiddleware,
     //   {
