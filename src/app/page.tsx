@@ -10,6 +10,18 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+
+export const metadata = {
+  title: "Home",
+  description: "Explore interactive examples including data tables and dynamic dialog forms built with Next.js and modern UI components.",
+  keywords: ["data table", "dialog form", "examples", "Next.js", "UI components"],
+  openGraph: {
+    title: "Interactive Examples | Next.JS Project Engine",
+    description: "Explore interactive examples including data tables and dynamic dialog forms.",
+    type: "website",
+  },
+};
+
 export default function Home() {
   return (
     <div className="container mx-auto p-4 max-w-[1440px]">
