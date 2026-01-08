@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /dashboard/*
+
+# Sitemap location (update to full URL if you want absolute URL)
+Sitemap: /sitemap.xml
