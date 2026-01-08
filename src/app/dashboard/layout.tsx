@@ -1,7 +1,13 @@
-"use server";
-
 // app/dashboard/layout.tsx
 import React from "react";
+
+export const metadata = {
+    robots: {
+        index: false,
+        follow: false,
+    },
+};
+
 import { ReactQueryProvider } from "@/providers/react-query";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./_components/dashboard-sidebar";
