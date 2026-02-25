@@ -73,6 +73,7 @@ interface DataTableProps<TData, TValue> {
 	onPreviousPage?: () => void;
 	onNextPage?: () => void;
 	onPageChange?: (page: number) => void;
+	onSearchChange?: (search: string) => void;
 	// -----------------------------------
 	onRowClick?: (row: Row<TData>) => void;
 	onRowSelectionChange?: (selectedRows: Row<TData>[]) => void;
@@ -113,6 +114,7 @@ export function DataTable<TData, TValue>({
 	onPreviousPage,
 	onNextPage,
 	onPageChange,
+	onSearchChange,
 	onRowClick,
 	onRowSelectionChange,
 	onRowAction,
@@ -133,6 +135,15 @@ export function DataTable<TData, TValue>({
 	const [rowSelection, setRowSelection] = React.useState<RowSelectionState>(
 		{}
 	);
+	const [pagination, setPagination] = React.useState({
+		pageIndex: 0,
+		pageSize: pageSize,
+	});
+
+	// Sync pageSize prop to internal state if it changes
+	React.useEffect(() => {
+		setPagination(prev => ({ ...prev, pageSize }));
+	}, [pageSize]);
 
 	const isServerSide: boolean = !!queryOptions;
 
@@ -177,7 +188,8 @@ export function DataTable<TData, TValue>({
 
 	// filteredData: client-side OR search across the searchKeys
 	const filteredData = React.useMemo(() => {
-		// const q = globalSearch.trim().toLowerCase();
+		if (isServerSide) return data; // server handles filtering, just pass data
+
 		const q = debouncedSearch.trim().toLowerCase();
 		if (!q) return data;
 
@@ -197,14 +209,24 @@ export function DataTable<TData, TValue>({
 			})
 		);
 
-		// console.log('result', result);
-
 		return result;
-	}, [data, debouncedSearch, searchKeys]); //  globalSearch,
+	}, [data, debouncedSearch, searchKeys, isServerSide]);
 
+	// Trigger server-side search only when query actually changes
 	React.useEffect(() => {
-		setFilteredData(filteredData);
-	}, [filteredData])
+		if (isServerSide) {
+			onSearchChange?.(debouncedSearch);
+		}
+	}, [debouncedSearch, isServerSide]);
+
+	// Handle client-side filtering and page reset
+	React.useEffect(() => {
+		if (!isServerSide) {
+			// Client side: Reset to first page when search changes
+			setPagination(prev => ({ ...prev, pageIndex: 0 }));
+			setFilteredData(filteredData);
+		}
+	}, [filteredData, isServerSide]);
 
 	// React.useEffect(() => {
 	// 	console.log('filteredZustand', filteredDataZustand)
@@ -339,34 +361,34 @@ export function DataTable<TData, TValue>({
 			columnFilters,
 			columnVisibility,
 			rowSelection,
-			...(isServerSide && {
-				pagination: {
+			pagination: isServerSide
+				? {
 					pageIndex: Math.max((queryOptions?.page ?? 1) - 1, 0),
 					pageSize: queryOptions?.limit ?? 10,
-				},
-			}),
+				}
+				: pagination,
 		},
 
 		// ===== SERVER PAGE CHANGE =====
-		onPaginationChange: isServerSide
-			? (updater) => {
-				const old = {
-					pageIndex: queryOptions!.page - 1,
-					pageSize: queryOptions!.limit,
+		onPaginationChange: (updater) => {
+			const oldPagination = isServerSide
+				? {
+					pageIndex: Math.max((queryOptions?.page ?? 1) - 1, 0),
+					pageSize: queryOptions?.limit ?? 10,
 				}
+				: pagination;
 
-				const next =
-					typeof updater === "function"
-						? updater(old)
-						: updater
+			const nextPagination =
+				typeof updater === "function"
+					? updater(oldPagination)
+					: updater;
 
-				// kasih tau luar
-				onPageChange?.(next.pageIndex + 1)
-
-				// wajib update ke react-table juga
-				table.setPagination(next)
+			if (isServerSide) {
+				onPageChange?.(nextPagination.pageIndex + 1);
+			} else {
+				setPagination(nextPagination);
 			}
-			: undefined,
+		},
 		initialState: {
 			pagination: {
 				pageSize,
@@ -374,9 +396,17 @@ export function DataTable<TData, TValue>({
 		},
 		enableSorting,
 		enableFilters: enableSearch,
+		autoResetPageIndex: false,
 	});
 
-	console.log('isServerSide', isServerSide);
+	// Debugging logs
+	console.log(`[DataTable:${tableName}] isServerSide:`, isServerSide);
+	console.log(`[DataTable:${tableName}] Table Pagination State:`, table.getState().pagination);
+	console.log(`[DataTable:${tableName}] Raw Data count:`, data.length);
+	console.log(`[DataTable:${tableName}] Filtered Data count (Zustand):`, filteredDataZustand.length);
+	console.log(`[DataTable:${tableName}] Page Count:`, table.getPageCount());
+	console.log(`[DataTable:${tableName}] Can Next:`, table.getCanNextPage());
+	console.log(`[DataTable:${tableName}] Can Prev:`, table.getCanPreviousPage());
 
 	// Handle row selection changes
 	React.useEffect(() => {
@@ -607,21 +637,11 @@ export function DataTable<TData, TValue>({
 						</select>
 					</div>
 					<div className="flex items-center space-x-2">
-						<select
-							value={pageSize}
-							onChange={(e) => {
-								const size = Number(e.target.value);
-								if (isServerSide) {
-									onPageChange?.(size ?? 1);  // optional: reset ke page 1
-								} else {
-									table.setPageSize(size);
-								}
-							}}
-						>
-						</select>
-
 						<Button
+							variant="outline"
+							size="sm"
 							onClick={() => {
+								onPreviousPage?.();
 								if (isServerSide) {
 									onPageChange?.(queryOptions!.page - 1);
 								} else {
@@ -634,28 +654,41 @@ export function DataTable<TData, TValue>({
 						>
 							Previous
 						</Button>
-						<Input
-							value={isServerSide
-								? queryOptions!.page
-								: table.getState().pagination.pageIndex + 1}
-							onChange={(e) => {
-								const val = Number(e.target.value);
-								if (isNaN(val)) return;
+						<div className="flex items-center space-x-1">
+							<span className="text-sm font-medium">
+								Page
+								<Input
+									type="text"
+									className="w-14 mx-2 text-center h-8"
+									min={1}
+									max={isServerSide ? queryOptions?.lastPage : table.getPageCount()}
+									value={isServerSide
+										? queryOptions!.page
+										: table.getState().pagination.pageIndex + 1}
+									onChange={(e) => {
+										const val = e.target.value ? Number(e.target.value) : 0;
+										if (isNaN(val)) return;
 
-								if (isServerSide) {
-									onPageChange?.(
-										Math.min(Math.max(val, 1), queryOptions!.lastPage)
-									);
-								} else {
-									table.setPageIndex(
-										Math.min(Math.max(val - 1, 0), table.getPageCount() - 1)
-									);
-								}
-							}}
-						/>
-
+										if (isServerSide) {
+											onPageChange?.(
+												Math.min(Math.max(val, 1), queryOptions!.lastPage)
+											);
+										} else {
+											table.setPageIndex(
+												Math.min(Math.max(val - 1, 0), table.getPageCount() - 1)
+											);
+										}
+									}}
+								/>
+								of {' '}
+								{isServerSide ? queryOptions?.lastPage : table.getPageCount()}
+							</span>
+						</div>
 						<Button
+							variant="outline"
+							size="sm"
 							onClick={() => {
+								onNextPage?.();
 								if (isServerSide) {
 									onPageChange?.(queryOptions!.page + 1);
 								} else {
@@ -665,55 +698,6 @@ export function DataTable<TData, TValue>({
 							disabled={isServerSide
 								? queryOptions!.page >= queryOptions!.lastPage
 								: !table.getCanNextPage()}
-						>
-							Next
-						</Button>
-
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => {
-								onPreviousPage?.();
-								table.previousPage();
-							}}
-							disabled={!table.getCanPreviousPage()}
-						>
-							Previous
-						</Button>
-						<div className="flex items-center space-x-1">
-							<span className="text-sm font-medium">
-								Page
-								{/* {table.getState().pagination.pageIndex + 1}{" "} */}
-								<Input
-									type="text"
-									className="w-14 mx-2 text-center"
-									min={1}
-									max={table.getPageCount()}
-									value={table.getState().pagination.pageIndex + 1}
-									onChange={(e) => {
-
-										const page = e.target.value ? Number(e.target.value) - 1 : 0
-
-										if (!isNaN(page)) {
-											// debouncedGoToPage(page);
-											table.setPageIndex(
-												Math.min(Math.max(page, 0), table.getPageCount() - 1)
-											)
-										}
-									}}
-								/>
-								of {' '}
-								{table.getPageCount()}
-							</span>
-						</div>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => {
-								onNextPage?.();
-								table.nextPage();
-							}}
-							disabled={!table.getCanNextPage()}
 						>
 							Next
 						</Button>
