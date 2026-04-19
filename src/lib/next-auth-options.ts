@@ -22,10 +22,13 @@ declare module "next-auth" {
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      id: "credentials",
+      name: "credentials",
+      type: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        recaptchaToken: { label: "reCAPTCHA Token", type: "text" },
       },
       async authorize(credentials) {
         console.log("Authorize called with:", credentials);
@@ -38,28 +41,30 @@ export const authOptions: NextAuthOptions = {
             data: {
               email: credentials?.email,
               password: credentials?.password,
+              recaptchaToken: credentials?.recaptchaToken,
             },
           });
 
-          const res = req.data; //req.data?.data ||
+          const res = req.data;
+          console.log("API Response:", res);
 
-          const user = res.data.user;
+          const user = res.data?.user;
 
-          // console.log("res", res);
-          if (res) {
+          if (res && user) {
             const result = {
               ...user,
               accessToken: res.token,
             };
-            // console.log("result", result);
+            console.log("NextAuth will return:", result);
             return result;
           }
+          
+          console.log("No user found in response");
           return null;
         } catch (err) {
           console.error("Login error:", err);
           return null;
         }
-        // throw new Error("Email atau password salah x");
       },
     }),
   ],
@@ -95,6 +100,7 @@ export const authOptions: NextAuthOptions = {
 
   pages: {
     signIn: "/auth/login",
+    error: "/auth/error",
   },
 
   secret: process.env.NEXTAUTH_SECRET,
