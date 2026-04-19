@@ -18,8 +18,9 @@ import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { Input } from "@/components/ui/input";
 import { Bell, Check, X, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { menu_items } from "./dashboard-sidebar";
+import { main_menu_items, master_menu_items, settings_menu_items } from "./dashboard-sidebar";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 // Define interfaces for better type safety
 interface MenuItem {
@@ -73,51 +74,105 @@ export function DashboardNavbar() {
             <SidebarTrigger />
             <SearchMenuInput />
             {user ? (
-                <div className="flex gap-4 justify-between">
-                    <AnimatedThemeToggler />
-                    <NotificationButton />
-                    {/* User Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                className="flex items-center gap-2 px-2 py-1 hover:bg-transparent"
-                            >
-                                <Avatar className="w-8 h-8">
-                                    <AvatarImage src={user.image ?? undefined} alt={user.name ?? "User"} />
-                                    <AvatarFallback>{user.name?.charAt(0).toUpperCase() ?? "?"}</AvatarFallback>
-                                </Avatar>
-                                <span className="flex flex-col text-left">
-                                    <span className="font-semibold text-sm">{user.name}</span>
-                                    <span className="text-xs text-muted-foreground capitalize">{user.role ?? "user"}</span>
-                                </span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel>Account</DropdownMenuLabel>
+                <>
+                    <div className="hidden md:flex gap-4 justify-between">
+                        <AnimatedThemeToggler />
+                        <NotificationButton />
+                        {/* User Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className="flex items-center gap-2 px-2 py-1 hover:bg-transparent"
+                                >
+                                    <div className="relative">
+                                        <Avatar className="w-8 h-8">
+                                            <AvatarImage src={user.image ?? undefined} alt={user.name ?? "User"} />
+                                            <AvatarFallback>{user.name?.charAt(0).toUpperCase() ?? "?"}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+                                    </div>
+                                    <span className="flex flex-col text-left">
+                                        <span className="font-semibold text-sm">{user.name}</span>
+                                        <span className="text-xs text-muted-foreground capitalize">{user.role ?? "user"}</span>
+                                    </span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel>Account</DropdownMenuLabel>
 
-                            <DropdownMenuItem>
-                                <User className="mr-2 w-4 h-4" />
-                                Profile
-                            </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/dashboard/profile">
+                                        <User className="mr-2 w-4 h-4" />
+                                        Profile
+                                    </Link>
+                                </DropdownMenuItem>
 
-                            <DropdownMenuItem>
-                                <Settings className="mr-2 w-4 h-4" />
-                                Settings
-                            </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/dashboard/settings">
+                                        <Settings className="mr-2 w-4 h-4" />
+                                        Settings
+                                    </Link>
+                                </DropdownMenuItem>
 
-                            <DropdownMenuItem>
-                                <Users className="mr-2 w-4 h-4" />
-                                HR
-                            </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/dashboard/users">
+                                        <Users className="mr-2 w-4 h-4" />
+                                        HR
+                                    </Link>
+                                </DropdownMenuItem>
 
-                            <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/auth/login" })}>
-                                <LogOut className="mr-2 w-4 h-4" />
-                                Logout
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                                <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/auth/login" })}>
+                                    <LogOut className="mr-2 w-4 h-4" />
+                                    Logout
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+
+                    {/* Mobile User Menu */}
+                    <div className="md:hidden flex gap-2">
+                        <AnimatedThemeToggler />
+                        <NotificationButton />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="relative p-1">
+                                    <Avatar className="w-8 h-8">
+                                        <AvatarImage src={user.image ?? undefined} alt={user.name ?? "User"} />
+                                        <AvatarFallback>{user.name?.charAt(0).toUpperCase() ?? "?"}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel>
+                                    <div>
+                                        <div className="font-semibold text-sm">{user.name}</div>
+                                        <div className="text-xs text-muted-foreground capitalize">{user.role ?? "user"}</div>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                    <User className="mr-2 w-4 h-4" />
+                                    Profile
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <Settings className="mr-2 w-4 h-4" />
+                                    Settings
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <Users className="mr-2 w-4 h-4" />
+                                    HR
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/auth/login" })}>
+                                    <LogOut className="mr-2 w-4 h-4" />
+                                    Logout
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </>
             ) : (
                 <Button variant="outline" disabled>
                     Loading...
@@ -161,7 +216,7 @@ const SearchMenuInput = () => {
         return flattened;
     };
 
-    const allMenuItems = flattenMenuItems(menu_items);
+    const allMenuItems = flattenMenuItems([...main_menu_items, ...master_menu_items, ...settings_menu_items]);
 
     const filteredItems = useMemo(() => {
         if (searchQuery.trim() === '') {

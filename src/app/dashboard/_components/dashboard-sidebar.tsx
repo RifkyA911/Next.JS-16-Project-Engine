@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, Database, FileText, FolderTree, Home, Inbox, Package, Settings, ShoppingCart, Users, ChevronDown } from "lucide-react"
+import { Calendar, Database, FileText, FolderTree, Home, Inbox, Package, Settings, ShoppingCart, Users, ChevronDown, ChevronRight, Building2, ChevronUp, Building, Factory, BarChart3 } from "lucide-react";
+import { FaRocket, FaSatellite, FaGlobe, FaBolt, FaSpaceShuttle, FaSatelliteDish, FaUserAstronaut } from "react-icons/fa";
 
 import {
     Sidebar,
@@ -12,9 +13,15 @@ import {
     SidebarMenu,
     SidebarMenuItem,
     SidebarMenuButton,
+    SidebarHeader,
+    SidebarProvider,
+    SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface MenuItem {
     title: string;
@@ -24,8 +31,25 @@ interface MenuItem {
     children?: MenuItem[];
 }
 
-// Menu items.
-export const menu_items: MenuItem[] = [
+interface Company {
+    id: number;
+    name: string;
+    code: string;
+    icon: React.ComponentType<any>;
+}
+
+// Company data
+const companies: Company[] = [
+    { id: 1, name: "NovaFlare Corp", code: "NOVA-01", icon: FaRocket },
+    { id: 2, name: "Stellar Dynamics", code: "STEL-02", icon: FaSatellite },
+    { id: 3, name: "Cosmic Systems", code: "COSM-03", icon: FaGlobe },
+    { id: 4, name: "Galaxy Tech", code: "GALX-04", icon: FaBolt },
+    { id: 5, name: "SpaceX Division", code: "SPCX-05", icon: FaSpaceShuttle },
+    { id: 6, name: "Orbital Station", code: "ORBT-06", icon: FaSatelliteDish },
+];
+
+// Menu items grouped by sections
+export const main_menu_items: MenuItem[] = [
     {
         title: "Home",
         url: "/dashboard",
@@ -42,113 +66,105 @@ export const menu_items: MenuItem[] = [
         url: "/dashboard/calendar",
         icon: Calendar,
     },
+];
+
+export const master_menu_items: MenuItem[] = [
     {
-        title: "Master",
-        icon: Database,
-        children: [
-            {
-                title: "User",
-                url: "/dashboard/users",
-                icon: Users,
-            },
-            {
-                title: "Users Management",
-                url: "/dashboard/master/users",
-                icon: Users,
-                children: [
-                    {
-                        title: "User List",
-                        url: "/dashboard/master/users/list",
-                        icon: Users,
-                    },
-                    {
-                        title: "User Roles",
-                        url: "/dashboard/master/users/roles",
-                        icon: Users,
-                    },
-                    {
-                        title: "Permissions",
-                        url: "/dashboard/master/users/permissions",
-                        icon: Users,
-                    },
-                ],
-            },
-            {
-                title: "Products",
-                url: "/dashboard/master/products",
-                icon: Package,
-                children: [
-                    {
-                        title: "Product List",
-                        url: "/dashboard/master/products/list",
-                        icon: Package,
-                    },
-                    {
-                        title: "Categories",
-                        url: "/dashboard/master/products/categories",
-                        icon: FolderTree,
-                    },
-                    {
-                        title: "Inventory",
-                        url: "/dashboard/master/products/inventory",
-                        icon: Package,
-                    },
-                ],
-            },
-        ],
+        title: "Users",
+        url: "/dashboard/users",
+        icon: Users,
+    },
+    {
+        title: "Inventory",
+        url: "/dashboard/inventory",
+        icon: Package,
+    }
+];
+
+export const analytics_menu_items: MenuItem[] = [
+    {
+        title: "Analytics",
+        url: "/dashboard/analytics",
+        icon: BarChart3,
     },
     {
         title: "Orders",
-        url: "/dashboard/master/orders",
+        url: "/dashboard/orders",
         icon: ShoppingCart,
         children: [
             {
                 title: "Order List",
-                url: "/dashboard/master/orders/list",
+                url: "/dashboard/orders/list",
                 icon: ShoppingCart,
             },
             {
                 title: "Pending Orders",
-                url: "/dashboard/master/orders/pending",
+                url: "/dashboard/orders/pending",
                 icon: ShoppingCart,
                 badge: "5",
             },
             {
                 title: "Completed Orders",
-                url: "/dashboard/master/orders/completed",
+                url: "/dashboard/orders/completed",
                 icon: ShoppingCart,
             },
         ],
     },
     {
         title: "Reports",
-        url: "/dashboard/master/reports",
+        url: "/dashboard/reports",
         icon: FileText,
         children: [
             {
                 title: "Sales Report",
-                url: "/dashboard/master/reports/sales",
+                url: "/dashboard/reports/sales",
                 icon: FileText,
             },
             {
                 title: "Financial Report",
-                url: "/dashboard/master/reports/financial",
+                url: "/dashboard/reports/financial",
                 icon: FileText,
             },
         ],
+    },
+];
+
+export const settings_menu_items: MenuItem[] = [
+    {
+        title: "Profile",
+        url: "/dashboard/profile",
+        icon: Users,
     },
     {
         title: "Settings",
         url: "/dashboard/settings",
         icon: Settings,
+        children: [
+            {
+                title: "General",
+                url: "/dashboard/settings/general",
+                icon: Settings,
+            },
+            {
+                title: "Security",
+                url: "/dashboard/settings/security",
+                icon: Settings,
+            },
+            {
+                title: "Appearance",
+                url: "/dashboard/settings/appearance",
+                icon: Settings,
+            },
+        ],
     },
 ];
 
-const MenuItemComponent = ({ item, level = 0, openItems, toggleItem }: {
+const MenuItemComponent = ({ item, level = 0, openItems, toggleItem, handleMenuClick }: {
     item: MenuItem;
     level: number;
     openItems: Set<string>;
     toggleItem: (key: string) => void;
+    handleMenuClick: (url?: string) => void;
 }) => {
     const key = `${item.title}-${level}`;
     const isOpen = openItems.has(key);
@@ -157,7 +173,6 @@ const MenuItemComponent = ({ item, level = 0, openItems, toggleItem }: {
     if (item.children && item.children.length > 0) {
         return (
             <div className="relative">
-
                 <Collapsible open={isOpen} onOpenChange={() => toggleItem(key)}>
                     <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
@@ -189,6 +204,7 @@ const MenuItemComponent = ({ item, level = 0, openItems, toggleItem }: {
                                             level={level + 1}
                                             openItems={openItems}
                                             toggleItem={toggleItem}
+                                            handleMenuClick={handleMenuClick}
                                         />
                                     ))}
                                 </SidebarMenu>
@@ -202,10 +218,9 @@ const MenuItemComponent = ({ item, level = 0, openItems, toggleItem }: {
 
     return (
         <div className="relative">
-
             <SidebarMenuItem>
                 <SidebarMenuButton asChild style={{ paddingLeft: `${indent + 8}px` }} className="relative">
-                    <Link href={item.url ?? '#'}>
+                    <Link href={item.url ?? '#'} onClick={() => handleMenuClick(item.url)}>
                         {/* Connecting line for child item */}
                         {level > 0 && (
                             <div className="absolute left-0 top-1/2 w-4 h-px bg-border -translate-y-1/2" style={{ left: `${indent - 4}px` }} />
@@ -227,6 +242,8 @@ const MenuItemComponent = ({ item, level = 0, openItems, toggleItem }: {
 
 export function DashboardSidebar() {
     const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+    const [selectedCompany, setSelectedCompany] = useState<Company>(companies[0]); // Novaflare Corp - logged-in user company
+    const { isMobile, setOpenMobile } = useSidebar();
 
     const toggleItem = (key: string) => {
         setOpenItems(prev => {
@@ -240,20 +257,109 @@ export function DashboardSidebar() {
         });
     };
 
+    const handleMenuClick = (url?: string) => {
+        if (url && isMobile) {
+            setOpenMobile(false);
+        }
+    };
+
     return (
         <Sidebar>
+            <SidebarHeader>
+                <div className="flex items-center gap-3 p-4">
+                    {/* <div className="flex items-center justify-center w-10 h-10 bg-primary rounded-lg">
+                        <selectedCompany.icon className="h-5 w-5 text-primary-foreground" />
+                    </div> */}
+                    <Select value={selectedCompany.id.toString()} onValueChange={(value) => {
+                        const company = companies.find(c => c.id.toString() === value);
+                        if (company) setSelectedCompany(company);
+                    }}>
+                        <SelectTrigger className="w-full h-10 text-sm bg-transparent border-0 shadow-none focus:ring-0 outline-none!">
+                            <div className="flex items-center justify-between gap-6 pe-3">
+                                <selectedCompany.icon className="h-[200px] w-[200px]" />
+                                <span className="font-medium text-[20px] align-middle">{selectedCompany.name}</span>
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border-border">
+                            {companies.map((company) => (
+                                <SelectItem key={company.id} value={company.id.toString()}>
+                                    <div className="flex items-center gap-4 p-3">
+                                        <company.icon className="h-8 w-8" />
+                                        <span>{company.name}</span>
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupLabel>Application</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {menu_items.map((item) => (
+                            {main_menu_items.map((item) => (
                                 <MenuItemComponent
                                     key={`${item.title}-0`}
                                     item={item}
                                     level={0}
                                     openItems={openItems}
                                     toggleItem={toggleItem}
+                                    handleMenuClick={handleMenuClick}
+                                />
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel>Master Data</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {master_menu_items.map((item) => (
+                                <MenuItemComponent
+                                    key={`${item.title}-0`}
+                                    item={item}
+                                    level={0}
+                                    openItems={openItems}
+                                    toggleItem={toggleItem}
+                                    handleMenuClick={handleMenuClick}
+                                />
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel>Analytics</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {analytics_menu_items.map((item) => (
+                                <MenuItemComponent
+                                    key={`${item.title}-0`}
+                                    item={item}
+                                    level={0}
+                                    openItems={openItems}
+                                    toggleItem={toggleItem}
+                                    handleMenuClick={handleMenuClick}
+                                />
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel>Settings</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {settings_menu_items.map((item) => (
+                                <MenuItemComponent
+                                    key={`${item.title}-0`}
+                                    item={item}
+                                    level={0}
+                                    openItems={openItems}
+                                    toggleItem={toggleItem}
+                                    handleMenuClick={handleMenuClick}
                                 />
                             ))}
                         </SidebarMenu>
