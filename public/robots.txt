@@ -1,8 +1,24 @@
-User-agent: *
-Allow: /
-Disallow: /dashboard
-Disallow: /dashboard/
-Disallow: /dashboard/*
+# Public vs Internal Website Indicator
+# This website is designed for internal/demo purposes only
+# Uncomment the appropriate section below for your deployment type
 
-# Sitemap location (update to full URL if you want absolute URL)
-Sitemap: /sitemap.xml
+# ===== PUBLIC WEBSITE =====
+# Uncomment lines below for public deployment
+# User-agent: *
+# Allow: /
+# Disallow: /api/
+# Disallow: /auth/
+# Disallow: /dashboard/
+# Sitemap: https://your-domain.com/sitemap.xml
+
+# ===== INTERNAL/DEMO WEBSITE =====
+# Currently configured for internal/demo use
+User-agent: *
+Disallow: /
+
+# ===== SEO NOTES =====
+# For public deployment:
+# 1. Uncomment the PUBLIC WEBSITE section
+# 2. Update domain in sitemap URL
+# 3. Remove this comment block
+# 4. Add appropriate meta tags in layout.tsx
