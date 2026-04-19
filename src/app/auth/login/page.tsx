@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Shield, Mail, Lock, Github, Chrome, Twitter } from "lucide-react";
+import { FaEye, FaEyeSlash, FaShieldAlt, FaEnvelope, FaLock, FaGithub, FaGoogle, FaTwitter } from "react-icons/fa";
 import { ReCAPTCHAWrapper } from "@/components/ui/recaptcha";
 
 export default function LoginPage() {
@@ -71,7 +71,7 @@ export default function LoginPage() {
                 <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
                     <CardHeader className="space-y-1 text-center pb-6">
                         <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                            <Shield className="h-8 w-8 text-white" />
+                            <FaShieldAlt className="h-8 w-8 text-white" />
                         </div>
                         <CardTitle className="text-2xl font-bold text-gray-900">
                             Welcome Back
@@ -88,7 +88,7 @@ export default function LoginPage() {
                                     Email Address
                                 </Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <Input
                                         id="email"
                                         type="email"
@@ -106,7 +106,7 @@ export default function LoginPage() {
                                     Password
                                 </Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <Input
                                         id="password"
                                         type={showPassword ? "text" : "password"}
@@ -124,9 +124,9 @@ export default function LoginPage() {
                                         onClick={() => setShowPassword(!showPassword)}
                                     >
                                         {showPassword ? (
-                                            <EyeOff className="h-4 w-4" />
+                                            <FaEyeSlash className="h-4 w-4" />
                                         ) : (
-                                            <Eye className="h-4 w-4" />
+                                            <FaEye className="h-4 w-4" />
                                         )}
                                     </Button>
                                 </div>
@@ -173,7 +173,7 @@ export default function LoginPage() {
                                 className="w-full h-11 border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg"
                                 onClick={() => alert("Google login - Placeholder")}
                             >
-                                <Chrome className="h-4 w-4 mr-2" />
+                                <FaGoogle className="h-4 w-4 mr-2" />
                                 Continue with Google
                             </Button>
                             <Button
@@ -181,7 +181,7 @@ export default function LoginPage() {
                                 className="w-full h-11 border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg"
                                 onClick={() => alert("GitHub login - Placeholder")}
                             >
-                                <Github className="h-4 w-4 mr-2" />
+                                <FaGithub className="h-4 w-4 mr-2" />
                                 Continue with GitHub
                             </Button>
                             <Button
@@ -189,7 +189,7 @@ export default function LoginPage() {
                                 className="w-full h-11 border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg"
                                 onClick={() => alert("Twitter login - Placeholder")}
                             >
-                                <Twitter className="h-4 w-4 mr-2" />
+                                <FaTwitter className="h-4 w-4 mr-2" />
                                 Continue with Twitter
                             </Button>
                         </div>

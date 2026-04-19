@@ -15,6 +15,23 @@ import {
     ArrowDownRight,
     MoreHorizontal
 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Area, AreaChart } from "recharts";
+
+// Chart configuration
+const chartConfig = {
+    revenue: {
+        label: "Revenue",
+        color: "hsl(var(--chart-1))",
+    },
+    orders: {
+        label: "Orders",
+        color: "hsl(var(--chart-2))",
+    },
+    users: {
+        label: "Users",
+        color: "hsl(var(--chart-3))",
+    },
+} as const;
 
 // Mock data for charts
 const monthlyData = [
@@ -27,11 +44,11 @@ const monthlyData = [
 ];
 
 const categoryData = [
-    { category: "Electronics", value: 35, color: "bg-blue-500" },
-    { category: "Clothing", value: 25, color: "bg-green-500" },
-    { category: "Food", value: 20, color: "bg-yellow-500" },
-    { category: "Books", value: 12, color: "bg-purple-500" },
-    { category: "Other", value: 8, color: "bg-gray-500" },
+    { category: "Electronics", value: 35, color: "#3b82f6" },
+    { category: "Clothing", value: 25, color: "#10b981" },
+    { category: "Food", value: 20, color: "#f59e0b" },
+    { category: "Books", value: 12, color: "#8b5cf6" },
+    { category: "Other", value: 8, color: "#6b7280" },
 ];
 
 const recentOrders = [
@@ -125,22 +142,49 @@ export default function DashboardPage() {
                 {/* Revenue Chart */}
                 <Card className="lg:col-span-2">
                     <CardHeader>
-                        <CardTitle>Revenue Overview</CardTitle>
-                        <CardDescription>Monthly revenue for the last 6 months</CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Revenue Overview</CardTitle>
+                                <CardDescription>Monthly revenue for the last 6 months</CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span className="text-xs text-green-600">Online</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                    <span className="text-xs text-red-600">Offline</span>
+                                </div>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-64 flex items-end justify-between gap-2">
-                            {monthlyData.map((item, index) => (
-                                <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                                    <div
-                                        className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-md transition-all duration-300 hover:from-blue-700 hover:to-blue-500"
-                                        style={{ height: `${Math.max((item.revenue / 67000) * 100, 5)}%` }}
-                                        title={`${item.month}: $${item.revenue.toLocaleString('en-US')}`}
+                        {monthlyData && monthlyData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={200}>
+                                <LineChart data={monthlyData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                                    <YAxis tick={{ fontSize: 12 }} />
+                                    <Tooltip
+                                        formatter={(value: any) => [`$${Number(value).toLocaleString('en-US')}`, 'Revenue']}
+                                        contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
                                     />
-                                    <span className="text-xs text-muted-foreground">{item.month}</span>
-                                </div>
-                            ))}
-                        </div>
+                                    <Line
+                                        type="monotone"
+                                        dataKey="revenue"
+                                        stroke="hsl(var(--chart-1))"
+                                        strokeWidth={3}
+                                        dot={{ fill: "hsl(var(--chart-1))", strokeWidth: 2, r: 5 }}
+                                        activeDot={{ r: 7 }}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-48 flex items-center justify-center">
+                                <div className="text-muted-foreground">Loading chart...</div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -151,25 +195,18 @@ export default function DashboardPage() {
                         <CardDescription>Sales by category</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {categoryData.map((item, index) => (
-                                <div key={index} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-4 h-4 rounded ${item.color}`} />
-                                        <span className="text-sm font-medium">{item.category}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-32 bg-gray-200 rounded-full h-2">
-                                            <div
-                                                className={`h-2 rounded-full ${item.color}`}
-                                                style={{ width: `${item.value}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-sm text-muted-foreground w-8">{item.value}%</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        <ResponsiveContainer width="100%" height={200}>
+                            <BarChart data={categoryData} layout="horizontal">
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                <XAxis type="number" />
+                                <YAxis dataKey="category" type="category" width={80} />
+                                <Tooltip
+                                    formatter={(value: any) => [`${value}%`, 'Percentage']}
+                                    contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                                />
+                                <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={[0, 8, 8, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </CardContent>
                 </Card>
             </div>
@@ -202,7 +239,7 @@ export default function DashboardPage() {
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="text-right">
-                                        <p className="font-medium">${order.amount.toLocaleString()}</p>
+                                        <p className="font-medium">${order.amount.toLocaleString('en-US')}</p>
                                         <p className="text-sm text-muted-foreground">{order.date}</p>
                                     </div>
                                     <Badge
@@ -232,49 +269,71 @@ export default function DashboardPage() {
                         <div className="space-y-4">
                             {[
                                 { icon: Users, text: "New user registered", time: "2 minutes ago", color: "text-blue-600" },
-                                { icon: ShoppingCart, text: "New order #ORD-006 placed", time: "5 minutes ago", color: "text-green-600" },
-                                { icon: Package, text: "Product inventory updated", time: "15 minutes ago", color: "text-purple-600" },
-                                { icon: DollarSign, text: "Payment received for #ORD-005", time: "1 hour ago", color: "text-yellow-600" },
-                                { icon: Activity, text: "System backup completed", time: "2 hours ago", color: "text-gray-600" },
-                            ].map((activity, index) => {
-                                const Icon = activity.icon;
-                                return (
-                                    <div key={index} className="flex items-center gap-3">
-                                        <Icon className={`h-4 w-4 ${activity.color}`} />
-                                        <div className="flex-1">
-                                            <p className="text-sm">{activity.text}</p>
-                                            <p className="text-xs text-muted-foreground">{activity.time}</p>
-                                        </div>
+                                { icon: ShoppingCart, text: "New order received", time: "5 minutes ago", color: "text-green-600" },
+                                { icon: Package, text: "Product added to inventory", time: "10 minutes ago", color: "text-purple-600" },
+                                { icon: DollarSign, text: "Payment received", time: "15 minutes ago", color: "text-yellow-600" },
+                                { icon: Activity, text: "System backup completed", time: "1 hour ago", color: "text-gray-600" },
+                            ].map((activity, index) => (
+                                <div key={index} className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activity.color} bg-opacity-10`}>
+                                        <activity.icon className="h-4 w-4" />
                                     </div>
-                                );
-                            })}
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium">{activity.text}</p>
+                                        <p className="text-xs text-muted-foreground">{activity.time}</p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
-                        <CardDescription>Frequently used actions</CardDescription>
+                        <CardTitle>Quick Stats</CardTitle>
+                        <CardDescription>Important metrics at a glance</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-2 gap-4">
-                            <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                <ShoppingCart className="h-6 w-6" />
-                                <span className="text-sm">New Order</span>
-                            </Button>
-                            <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                <Package className="h-6 w-6" />
-                                <span className="text-sm">Add Product</span>
-                            </Button>
-                            <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                <Users className="h-6 w-6" />
-                                <span className="text-sm">Add User</span>
-                            </Button>
-                            <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                <Activity className="h-6 w-6" />
-                                <span className="text-sm">View Report</span>
-                            </Button>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <Users className="h-4 w-4 text-white" />
+                                    </div>
+                                    <span className="text-sm font-medium">Active Sessions</span>
+                                </div>
+                                <span className="text-lg font-bold">247</span>
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                        <ShoppingCart className="h-4 w-4 text-white" />
+                                    </div>
+                                    <span className="text-sm font-medium">Pending Orders</span>
+                                </div>
+                                <span className="text-lg font-bold">18</span>
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                                        <Package className="h-4 w-4 text-white" />
+                                    </div>
+                                    <span className="text-sm font-medium">Low Stock Items</span>
+                                </div>
+                                <span className="text-lg font-bold">5</span>
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                                        <TrendingUp className="h-4 w-4 text-white" />
+                                    </div>
+                                    <span className="text-sm font-medium">Conversion Rate</span>
+                                </div>
+                                <span className="text-lg font-bold">3.2%</span>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
