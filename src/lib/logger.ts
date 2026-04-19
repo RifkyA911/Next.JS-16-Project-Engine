@@ -4,31 +4,49 @@ import path from "path";
 import fs from "fs";
 import { NextRequest } from "next/server";
 
-const logDir = path.join(process.cwd(), "logs");
-if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
+let logger: winston.Logger;
 
-// const date = new Date().toISOString().split("T")[0];
-// const fileName = `app-${date}.log`;
+// Check if we're in Vercel/serverless environment
+const isVercel = process.env.VERCEL || process.env.NODE_ENV === "production";
 
-const transport = new winston.transports.DailyRotateFile({
-  filename: path.join(logDir, "app-%DATE%.log"),
-  datePattern: "YYYY-MM-DD",
-  maxSize: "5m",
-  maxFiles: "30d",
-  zippedArchive: true,
-});
+if (!isVercel) {
+  // Local development - use file logging
+  const logDir = path.join(process.cwd(), "logs");
+  if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
 
-const logger = winston.createLogger({
-  level: "info",
-  format: winston.format.combine(
-    winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    winston.format.printf(
-      ({ timestamp, level, message }) =>
-        `[${timestamp}] [${level.toUpperCase()}]: ${message}`
-    )
-  ),
-  transports: [transport],
-});
+  const transport = new winston.transports.DailyRotateFile({
+    filename: path.join(logDir, "app-%DATE%.log"),
+    datePattern: "YYYY-MM-DD",
+    maxSize: "5m",
+    maxFiles: "30d",
+    zippedArchive: true,
+  });
+
+  logger = winston.createLogger({
+    level: "info",
+    format: winston.format.combine(
+      winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+      winston.format.printf(
+        ({ timestamp, level, message }) =>
+          `[${timestamp}] [${level.toUpperCase()}]: ${message}`
+      )
+    ),
+    transports: [transport],
+  });
+} else {
+  // Vercel/production - use console only
+  logger = winston.createLogger({
+    level: "info",
+    format: winston.format.combine(
+      winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+      winston.format.printf(
+        ({ timestamp, level, message }) =>
+          `[${timestamp}] [${level.toUpperCase()}]: ${message}`
+      )
+    ),
+    transports: [new winston.transports.Console()],
+  });
+}
 
 // Console transport (dengan warna)
 // if (process.env.NODE_ENV !== "production") {
