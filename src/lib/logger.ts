@@ -73,3 +73,34 @@ export function logRequest(req: NextRequest, status: number, start: number) {
 
   logger.info(`[${ip}] ${req.method} ${req.url} [${status}] ${duration}ms`);
 }
+
+export function logRequestBody(req: NextRequest) {
+  try {
+    const clonedReq = req.clone();
+    clonedReq.json().then(body => {
+      logger.info(`Request Body: ${JSON.stringify(body, null, 2)}`);
+    }).catch(() => {
+      logger.info('Request Body: Unable to parse JSON body');
+    });
+  } catch (error) {
+    logger.info('Request Body: Unable to clone request');
+  }
+}
+
+export function logResponseBody(response: any, statusCode: number) {
+  try {
+    logger.info(`Response [${statusCode}]: ${JSON.stringify(response, null, 2)}`);
+  } catch (error) {
+    logger.info(`Response [${statusCode}]: Unable to stringify response`);
+  }
+}
+
+export function logError(error: any, context?: string) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorStack = error instanceof Error ? error.stack : undefined;
+  
+  logger.error(`Error${context ? ` in ${context}` : ''}: ${errorMessage}`);
+  if (errorStack) {
+    logger.error(`Stack trace: ${errorStack}`);
+  }
+}
