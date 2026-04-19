@@ -39,11 +39,12 @@ export interface DataTableQuery {
 
 export interface APIResponsePagination<TData> {
   data: TData[];
-  meta: {
+  pagination: {
     page: number;
     limit: number;
-    offset: number;
-    totalPage: number;
-    lastPage: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
   };
 }
