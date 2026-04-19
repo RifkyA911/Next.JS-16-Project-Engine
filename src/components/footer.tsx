@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Shield, Github, Twitter, Linkedin, Mail, Heart } from "lucide-react";
+import { Shield, Mail, Heart } from "lucide-react";
+import { FaGithub, FaLinkedin, FaTwitter } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -24,21 +25,21 @@ export default function Footer() {
                 className="text-slate-400 hover:text-white transition-colors"
                 aria-label="GitHub"
               >
-                <Github className="h-5 w-5" />
+                <FaGithub className="h-5 w-5" />
               </Link>
               <Link
                 href="https://twitter.com"
                 className="text-slate-400 hover:text-white transition-colors"
                 aria-label="Twitter"
               >
-                <Twitter className="h-5 w-5" />
+                <FaTwitter className="h-5 w-5" />
               </Link>
               <Link
                 href="https://linkedin.com"
                 className="text-slate-400 hover:text-white transition-colors"
                 aria-label="LinkedIn"
               >
-                <Linkedin className="h-5 w-5" />
+                <FaLinkedin className="h-5 w-5" />
               </Link>
               <Link
                 href="mailto:contact@example.com"
