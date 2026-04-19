@@ -17,6 +17,13 @@ export interface User {
   name: string;
   email: string;
   role: UserRoleType;
+  avatar?: string;
+  department?: string;
+  status?: "active" | "inactive" | "pending";
+  joinDate?: string;
+  lastLogin?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface UserDto {

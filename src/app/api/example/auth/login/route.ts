@@ -1,69 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SignOptions } from "jsonwebtoken";
-import { logRequest } from "@/lib/logger";
+import { logRequest, logError } from "@/lib/logger";
 import { signJWTToken } from "@/lib/jwt";
-
-const mockUsers = [
-  {
-    id: "1",
-    email: "admin@example.com",
-    username: "admin",
-    role: "administrator",
-    name: "Admin User",
-    password: "123456",
-    image:
-      "https://wallpapers.com/images/high/anime-profile-picture-jioug7q8n43yhlwn.jpg",
-    bio: "I am the admin user.",
-    is_active: true,
-    is_verified: true,
-    created_at: new Date(),
-    updated_at: new Date(),
-    last_login: new Date(),
-  },
-  {
-    id: "2",
-    email: "user@example.com",
-    username: "user",
-    role: "user",
-    name: "Dummy User",
-    password: "123456",
-    image:
-      "https://wallpapers.com/images/high/anime-profile-picture-jioug7q8n43yhlwn.jpg",
-    bio: "I am the user.",
-    is_active: true,
-    is_verified: true,
-    created_at: new Date(),
-    updated_at: new Date(),
-    last_login: new Date(),
-  },
-];
+import { comparePassword, DEMO_USERS } from "@/lib/auth-utils";
+import { createRateLimitMiddleware, authLimiter } from "@/lib/rate-limiter";
 
 export async function POST(req: NextRequest) {
   const start = Date.now();
   let status = 200;
 
+  // Rate limiting check
+  const rateLimitResponse = await createRateLimitMiddleware(authLimiter)(req);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   try {
     const body = await req.json();
-    const { username, email, password } = body;
+    const { username, email, password, recaptchaToken } = body;
 
     if ((!email && !username) || !password) {
       status = 400;
       return NextResponse.json({ error: "Bad Request Data" }, { status });
     }
 
+    // Validate reCAPTCHA token
+    if (!recaptchaToken) {
+      status = 400;
+      return NextResponse.json({ error: "reCAPTCHA token is required" }, { status });
+    }
+
+    // Verify reCAPTCHA token (you would need to implement this with Google's API)
+    // For demo purposes, we'll skip actual verification
+    // In production, you should verify with Google's reCAPTCHA API
+
     // Find the user
-    const user = mockUsers.find(
-      (u) => u.username === username || u.email === email
+    const user = DEMO_USERS.find(
+      (u: typeof DEMO_USERS[0]) => u.username === username || u.email === email
     );
     if (!user) {
       status = 401;
       return NextResponse.json({ error: "User does not exist" }, { status });
     }
 
-    // ✅ Dummy password check
+    // ✅ Secure password check with bcrypt
     if (
       (user.username === username || user.email === email) &&
-      user.password === password
+      await comparePassword(password, user.password)
     ) {
       const responsePayload = {
         user,
@@ -118,9 +101,11 @@ export async function POST(req: NextRequest) {
 
     // Invalid credentials
     status = 401;
+    logError(`Failed login attempt for ${email || username}`, 'login');
     return NextResponse.json({ error: "Invalid credentials" }, { status });
   } catch (err: any) {
     status = 500;
+    logError(err, 'login');
     return NextResponse.json(
       { error: err.message || "Internal Server Error" },
       { status }
