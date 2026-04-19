@@ -333,13 +333,58 @@ function SidebarInput({
 }
 
 function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
+  const [currentCompany, setCurrentCompany] = React.useState("Acme Corp");
+  const [showSwitcher, setShowSwitcher] = React.useState(false);
+
+  const companies = [
+    { id: "acme", name: "Acme Corp", logo: "🏢" },
+    { id: "tech", name: "Tech Solutions", logo: "💻" },
+    { id: "global", name: "Global Systems", logo: "🌍" },
+  ];
+
   return (
     <div
       data-slot="sidebar-header"
       data-sidebar="header"
-      className={cn("flex flex-col gap-2 p-2", className)}
+      className={cn("relative", className)}
       {...props}
-    />
+    >
+      {/* <div className="flex flex-col gap-2 p-2">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{companies.find(c => c.id === currentCompany)?.logo}</span>
+            <span className="font-semibold text-sm">{companies.find(c => c.id === currentCompany)?.name}</span>
+          </div>
+          <button
+            onClick={() => setShowSwitcher(!showSwitcher)}
+            className="p-1 rounded hover:bg-accent transition-colors"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
+        {showSwitcher && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg p-1 z-50">
+            {companies.map((company) => (
+              <button
+                key={company.id}
+                onClick={() => {
+                  setCurrentCompany(company.id);
+                  setShowSwitcher(false);
+                }}
+                className={`w-full flex items-center gap-2 p-2 rounded hover:bg-accent transition-colors ${currentCompany === company.id ? "bg-accent" : ""
+                  }`}
+              >
+                <span className="text-lg">{company.logo}</span>
+                <span className="text-sm">{company.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div> */}
+    </div>
   )
 }
 
@@ -569,7 +614,7 @@ function SidebarMenuAction({
         "peer-data-[size=lg]/menu-button:top-2.5",
         "group-data-[collapsible=icon]:hidden",
         showOnHover &&
-          "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0",
+        "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0",
         className
       )}
       {...props}
