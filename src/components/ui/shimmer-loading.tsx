@@ -55,6 +55,8 @@ export function ShimmerTable() {
     );
 }
 
+const CHART_HEIGHTS = [45, 78, 92, 65, 88, 72, 95, 58, 83, 70, 90, 62];
+
 export function ShimmerChart() {
     return (
         <div className="rounded-lg border p-6 space-y-4">
@@ -67,11 +69,11 @@ export function ShimmerChart() {
             </div>
             <div className="h-64 flex items-center justify-center">
                 <div className="w-full h-full flex gap-1 items-end">
-                    {[...Array(12)].map((_, i) => (
-                        <Skeleton 
-                            key={i} 
-                            className="flex-1" 
-                            style={{ height: `${Math.random() * 100 + 20}%` }}
+                    {CHART_HEIGHTS.map((height, i) => (
+                        <Skeleton
+                            key={i}
+                            className="flex-1"
+                            style={{ height: `${height}%` }}
                         />
                     ))}
                 </div>
