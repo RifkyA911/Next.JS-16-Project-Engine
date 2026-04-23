@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaEye, FaEyeSlash, FaShieldAlt, FaEnvelope, FaLock, FaGithub, FaGoogle, FaTwitter } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaShieldAlt, FaEnvelope, FaLock, FaGoogle, FaGithub, FaTwitter } from "react-icons/fa";
 import { ReCAPTCHAWrapper } from "@/components/ui/recaptcha";
 
 export default function LoginPage() {
@@ -66,7 +66,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="min-h-screen flex items-start justify-center pt-[5vh] pb-8">
             <div className="w-full max-w-md px-4">
                 <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
                     <CardHeader className="space-y-1 text-center pb-6">
@@ -169,29 +169,30 @@ export default function LoginPage() {
                         {/* Social Login Buttons */}
                         <div className="grid grid-cols-1 gap-3">
                             <Button
+                                type="button"
                                 variant="outline"
-                                className="w-full h-11 border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg"
-                                onClick={() => alert("Google login - Placeholder")}
+                                className="w-full h-11 border-gray-300 hover:bg-red-50 hover:border-red-400 hover:text-red-600 text-gray-700 rounded-lg transition-colors duration-200"
+                                onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
                             >
-                                <FaGoogle className="h-4 w-4 mr-2" />
+                                <FaGoogle className="h-4 w-4 mr-2 " />
                                 Continue with Google
                             </Button>
-                            <Button
+                            {/* <Button
                                 variant="outline"
                                 className="w-full h-11 border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg"
                                 onClick={() => alert("GitHub login - Placeholder")}
                             >
                                 <FaGithub className="h-4 w-4 mr-2" />
                                 Continue with GitHub
-                            </Button>
-                            <Button
+                            </Button> */}
+                            {/* <Button
                                 variant="outline"
                                 className="w-full h-11 border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg"
                                 onClick={() => alert("Twitter login - Placeholder")}
                             >
                                 <FaTwitter className="h-4 w-4 mr-2" />
                                 Continue with Twitter
-                            </Button>
+                            </Button> */}
                         </div>
                     </CardContent>
 

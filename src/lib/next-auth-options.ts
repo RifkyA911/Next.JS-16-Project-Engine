@@ -1,7 +1,7 @@
 import { axiosReq } from "@/utils/api";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-// import GoogleProvider from "next-auth/providers/google" // (for future OAuth)
+import GoogleProvider from "next-auth/providers/google";
 
 declare module "next-auth" {
   interface User {
@@ -67,6 +67,17 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
+    }),
   ],
 
   session: {
@@ -75,10 +86,15 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile }) {
       if (user) {
         token.accessToken = user.accessToken;
         token.role = user.role;
+      }
+      // For Google OAuth - capture profile picture
+      if (account?.provider === "google" && profile) {
+        token.picture = (profile as any).picture;
+        token.role = token.role ?? "user";
       }
       // console.log("callback jwt", token);
       return token;
