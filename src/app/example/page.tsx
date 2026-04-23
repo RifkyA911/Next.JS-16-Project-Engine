@@ -110,7 +110,7 @@ export default function ExamplePage() {
                 <h3 className="font-semibold mb-2">How it works:</h3>
                 <ul className="list-disc list-inside text-sm space-y-1">
                     <li>The <code>DataTable</code> receives <code>queryOptions</code>, which triggers <b>manual pagination</b> mode.</li>
-                    <li>When you click "Next", "Previous", or enter a page Number, <code>onPageChange</code> is called.</li>
+                    <li>When you click &quot;Next&quot;, &quot;Previous&quot;, or enter a page Number, <code>onPageChange</code> is called.</li>
                     <li>The parent component updates its state and triggers a new <code>fetch</code> request to the API.</li>
                     <li>The <code>isLoading</code> prop handles the loading indicator while fetching.</li>
                 </ul>

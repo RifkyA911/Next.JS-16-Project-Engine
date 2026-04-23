@@ -35,12 +35,30 @@ const chartConfig = {
 
 // Mock data for charts
 const monthlyData = [
-    { month: "Jan", revenue: 45000, orders: 120, users: 850 },
-    { month: "Feb", revenue: 52000, orders: 145, users: 920 },
-    { month: "Mar", revenue: 48000, orders: 135, users: 980 },
-    { month: "Apr", revenue: 61000, orders: 168, users: 1050 },
-    { month: "May", revenue: 55000, orders: 152, users: 1120 },
-    { month: "Jun", revenue: 67000, orders: 185, users: 1280 },
+    { month: "Jan 2022", revenue: 45000, orders: 120, users: 850 },
+    { month: "Feb 2022", revenue: 52000, orders: 145, users: 920 },
+    { month: "Mar 2022", revenue: 48000, orders: 135, users: 980 },
+    { month: "Apr 2022", revenue: 61000, orders: 168, users: 1050 },
+    { month: "May 2022", revenue: 55000, orders: 152, users: 1120 },
+    { month: "Jun 2022", revenue: 67000, orders: 185, users: 1280 },
+    { month: "Jul 2022", revenue: 72000, orders: 195, users: 1350 },
+    { month: "Aug 2022", revenue: 68000, orders: 178, users: 1420 },
+    { month: "Sep 2022", revenue: 75000, orders: 210, users: 1580 },
+    { month: "Oct 2022", revenue: 82000, orders: 225, users: 1650 },
+    { month: "Nov 2022", revenue: 79000, orders: 208, users: 1720 },
+    { month: "Dec 2022", revenue: 88000, orders: 245, users: 1890 },
+    { month: "Jan 2023", revenue: 92000, orders: 265, users: 1950 },
+    { month: "Feb 2023", revenue: 85000, orders: 248, users: 1820 },
+    { month: "Mar 2023", revenue: 98000, orders: 285, users: 2100 },
+    { month: "Apr 2023", revenue: 105000, orders: 305, users: 2280 },
+    { month: "May 2023", revenue: 112000, orders: 325, users: 2450 },
+    { month: "Jun 2023", revenue: 118000, orders: 345, users: 2680 },
+    { month: "Jul 2023", revenue: 125000, orders: 368, users: 2850 },
+    { month: "Aug 2023", revenue: 122000, orders: 352, users: 2720 },
+    { month: "Sep 2023", revenue: 135000, orders: 395, users: 2980 },
+    { month: "Oct 2023", revenue: 142000, orders: 418, users: 3150 },
+    { month: "Nov 2023", revenue: 138000, orders: 405, users: 3020 },
+    { month: "Dec 2023", revenue: 155000, orders: 458, users: 3280 },
 ];
 
 const categoryData = [
@@ -162,23 +180,45 @@ export default function DashboardPage() {
                     <CardContent>
                         {monthlyData && monthlyData.length > 0 ? (
                             <ResponsiveContainer width="100%" height={200}>
-                                <LineChart data={monthlyData}>
+                                <AreaChart data={monthlyData}>
+                                    <defs>
+                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+                                        </linearGradient>
+                                        <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
+                                        </linearGradient>
+                                    </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                                     <YAxis tick={{ fontSize: 12 }} />
                                     <Tooltip
-                                        formatter={(value: any) => [`$${Number(value).toLocaleString('en-US')}`, 'Revenue']}
+                                        formatter={(value: any, name: any) => {
+                                            if (name === 'revenue') return [`$${Number(value).toLocaleString('en-US')}`, 'Revenue'];
+                                            if (name === 'orders') return [`${value}`, 'Orders'];
+                                            return [value, name];
+                                        }}
                                         contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
                                     />
-                                    <Line
+                                    <Area
                                         type="monotone"
                                         dataKey="revenue"
-                                        stroke="hsl(var(--chart-1))"
-                                        strokeWidth={3}
-                                        dot={{ fill: "hsl(var(--chart-1))", strokeWidth: 2, r: 5 }}
-                                        activeDot={{ r: 7 }}
+                                        stackId="1"
+                                        stroke="#3b82f6"
+                                        strokeWidth={2}
+                                        fill="url(#colorRevenue)"
                                     />
-                                </LineChart>
+                                    <Area
+                                        type="monotone"
+                                        dataKey="orders"
+                                        stackId="1"
+                                        stroke="#10b981"
+                                        strokeWidth={2}
+                                        fill="url(#colorOrders)"
+                                    />
+                                </AreaChart>
                             </ResponsiveContainer>
                         ) : (
                             <div className="h-48 flex items-center justify-center">
@@ -196,15 +236,15 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={200}>
-                            <BarChart data={categoryData} layout="horizontal">
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis type="number" />
-                                <YAxis dataKey="category" type="category" width={80} />
+                            <BarChart data={categoryData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis dataKey="category" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
                                 <Tooltip
                                     formatter={(value: any) => [`${value}%`, 'Percentage']}
-                                    contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb' }}
                                 />
-                                <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={[0, 8, 8, 0]} />
+                                <Bar dataKey="value" fill="#10b981" radius={[8, 8, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>

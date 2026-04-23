@@ -1,7 +1,7 @@
 // utils/debounce.ts
 export function debounce<T extends (...args: any[]) => void>(
   func: T,
-  delayInSeconds: number
+  delayInSeconds: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -13,19 +13,18 @@ export function debounce<T extends (...args: any[]) => void>(
 
 export function debouncePromise<T>(
   fn: () => Promise<T>,
-  delayInSeconds: number
+  delayInSeconds: number,
 ): Promise<T> {
   return new Promise((resolve, reject) => {
-    let timer: any;
-
-    clearTimeout(timer);
-
-    timer = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         resolve(await fn());
       } catch (err) {
         reject(err);
       }
     }, delayInSeconds * 1000);
+
+    // Store timer for potential cleanup
+    return () => clearTimeout(timer);
   });
 }
