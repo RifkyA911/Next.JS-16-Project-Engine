@@ -16,6 +16,7 @@ import {
     FileText,
     BarChart3,
 } from "lucide-react";
+import { AnimatedThemeToggler } from "./ui/animated-theme-toggler";
 
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -52,7 +53,9 @@ export default function Navbar() {
                     </div>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-4">
+                    <div className="hidden md:flex items-center space-x-4 gap-4">
+                        <AnimatedThemeToggler />
+
                         {session ? (
                             <>
                                 {filteredNavigation.map((item) => (
