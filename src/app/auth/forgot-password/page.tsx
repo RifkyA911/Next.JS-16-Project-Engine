@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { ArrowLeft, Mail } from "lucide-react";
+import Navbar from "@/components/navbar";
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
@@ -46,58 +47,74 @@ export default function ForgotPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950">
-            <Card className="w-full max-w-md backdrop-blur-xl bg-white/70 dark:bg-slate-900/60 shadow-lg border border-slate-200 dark:border-slate-800">
-                <CardHeader>
-                    <CardTitle className="text-center text-xl font-semibold">Forgot Password</CardTitle>
-                    <CardDescription className="text-center text-sm text-slate-500">
-                        Enter your email address and we&apos;ll send you a link to reset your password.
-                    </CardDescription>
-                </CardHeader>
-
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email Address</Label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="you@example.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className="pl-10"
-                                />
+        <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+            <Navbar />
+            <div className="flex items-start justify-center pt-[5vh] pb-8 flex-1">
+                <div className="w-full max-w-md px-4">
+                    <Card className="shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 backdrop-blur-sm">
+                        <CardHeader className="space-y-1 text-center pb-6">
+                            <div className="mx-auto w-16 h-16 bg-linear-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                                <Mail className="h-8 w-8 text-white" />
                             </div>
-                        </div>
+                            <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">
+                                Forgot Password
+                            </CardTitle>
+                            <CardDescription className="text-slate-600 dark:text-slate-400">
+                                Enter your email address and we'll send you a link to reset your password
+                            </CardDescription>
+                        </CardHeader>
 
-                        <Button type="submit" disabled={loading} className="w-full">
-                            {loading ? "Sending..." : "Send Reset Link"}
-                        </Button>
-                    </form>
-                </CardContent>
+                        <CardContent className="space-y-6">
+                            <form onSubmit={handleSubmit} className="space-y-5">
+                                <div className="space-y-2">
+                                    <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Email Address
+                                    </Label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="you@example.com"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            className="pl-10 h-11 border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-500 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
 
-                <CardFooter className="flex flex-col gap-4">
-                    <Link
-                        href="/auth/login"
-                        className="flex items-center text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors"
-                    >
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Login
-                    </Link>
+                                <Button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full h-11 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-lg transition-all duration-200 rounded-lg"
+                                >
+                                    {loading ? "Sending..." : "Send Reset Link"}
+                                </Button>
+                            </form>
+                        </CardContent>
 
-                    {message && (
-                        <Alert
-                            variant={message.type === "error" ? "destructive" : "default"}
-                            className="w-full text-center"
-                        >
-                            <AlertDescription>{message.text}</AlertDescription>
-                        </Alert>
-                    )}
-                </CardFooter>
-            </Card>
+                        <CardFooter className="flex flex-col gap-4 pt-6">
+                            <Link
+                                href="/auth/login"
+                                className="flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
+                            >
+                                <ArrowLeft className="h-4 w-4 mr-2" />
+                                Back to Login
+                            </Link>
+
+                            {message && (
+                                <Alert
+                                    variant={message.type === "error" ? "destructive" : "default"}
+                                    className="w-full text-center"
+                                >
+                                    <AlertDescription>{message.text}</AlertDescription>
+                                </Alert>
+                            )}
+                        </CardFooter>
+                    </Card>
+                </div>
+            </div>
         </div>
     );
 }
