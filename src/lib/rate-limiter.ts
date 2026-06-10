@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logError } from "@/lib/logger";
 
+// Rate limiting configuration from environment variables
+const RATE_LIMIT_ENABLED = process.env.RATE_LIMIT_ENABLED === 'true';
+const RATE_LIMIT_GENERAL_MAX = parseInt(process.env.RATE_LIMIT_GENERAL_MAX || '100', 10);
+const RATE_LIMIT_GENERAL_WINDOW_MS = parseInt(process.env.RATE_LIMIT_GENERAL_WINDOW_MS || '900000', 10);
+const RATE_LIMIT_AUTH_MAX = parseInt(process.env.RATE_LIMIT_AUTH_MAX || '5', 10);
+const RATE_LIMIT_AUTH_WINDOW_MS = parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || '900000', 10);
+const RATE_LIMIT_API_MAX = parseInt(process.env.RATE_LIMIT_API_MAX || '30', 10);
+const RATE_LIMIT_API_WINDOW_MS = parseInt(process.env.RATE_LIMIT_API_WINDOW_MS || '60000', 10);
+
 // Simple in-memory rate limiter for demo purposes
 // In production, use Redis or similar for distributed rate limiting
 class InMemoryRateLimiter {
@@ -57,9 +66,9 @@ class InMemoryRateLimiter {
 }
 
 // Create different limiters for different use cases
-export const generalLimiter = new InMemoryRateLimiter(15 * 60 * 1000, 100); // 100 requests per 15 min
-export const authLimiter = new InMemoryRateLimiter(15 * 60 * 1000, 5); // 5 login attempts per 15 min
-export const apiLimiter = new InMemoryRateLimiter(60 * 1000, 30); // 30 API requests per minute
+export const generalLimiter = new InMemoryRateLimiter(RATE_LIMIT_GENERAL_WINDOW_MS, RATE_LIMIT_GENERAL_MAX);
+export const authLimiter = new InMemoryRateLimiter(RATE_LIMIT_AUTH_WINDOW_MS, RATE_LIMIT_AUTH_MAX);
+export const apiLimiter = new InMemoryRateLimiter(RATE_LIMIT_API_WINDOW_MS, RATE_LIMIT_API_MAX);
 
 // Cleanup old entries every 5 minutes
 setInterval(() => {
@@ -81,6 +90,11 @@ function getClientIdentifier(req: NextRequest): string {
 // Rate limiting middleware for API routes
 export function createRateLimitMiddleware(limiter: InMemoryRateLimiter) {
   return async (req: NextRequest): Promise<NextResponse | undefined> => {
+    // Check if rate limiting is enabled
+    if (!RATE_LIMIT_ENABLED) {
+      return undefined;
+    }
+
     const identifier = getClientIdentifier(req);
     const result = limiter.isAllowed(identifier);
 
