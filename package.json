@@ -1,6 +1,7 @@
 {
-  "name": "next.js-16-project-engine",
+  "name": "novastack",
   "version": "0.1.0",
+  "description": "Next.JS Kit Template - Production-ready Next.js SaaS Starter Kit engineered for scalable systems beyond the limits of the universe",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -61,11 +62,12 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "express-rate-limit": "^8.3.2",
+    "framer-motion": "^12.40.0",
     "input-otp": "^1.4.2",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^1.8.0",
-    "motion": "^12.23.24",
+    "motion": "^12.40.0",
     "next": "16.0.10",
     "next-auth": "^4.24.13",
     "next-devtools-mcp": "^0.3.5",
