@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import {
     Card,
     CardHeader,
@@ -21,7 +21,7 @@ import { ReCAPTCHAWrapper } from "@/components/ui/recaptcha";
 import Navbar from "@/components/navbar";
 import { ShieldCheck, User } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const showDemoButtons = searchParams.get('demo') === 'true'
@@ -245,5 +245,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <LoginForm />
+        </Suspense>
     );
 }
