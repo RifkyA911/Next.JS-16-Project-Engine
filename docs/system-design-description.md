@@ -1,0 +1,1107 @@
+# System Design Description (SDD)
+
+## Document Information
+
+- **Version**: 1.0.0
+- **Status**: Draft
+- **Last Updated**: 2026-06-07
+- **Product**: NovaStack
+
+---
+
+## 1. System Context Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         External Actors                         │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   End Users  │  │  Admin Users │  │  External    │          │
+│  │              │  │              │  │  Services    │          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│         │                 │                 │                  │
+└─────────┼─────────────────┼─────────────────┼──────────────────┘
+          │                 │                 │
+          │                 │                 │
+┌─────────┼─────────────────┼─────────────────┼──────────────────┐
+│         │    NovaStack System    │                  │
+│  ┌──────▼───────┐  ┌──────▼───────┐  ┌──────▼───────┐          │
+│  │   Web App    │  │   Admin UI   │  │   API Layer  │          │
+│  │  (Next.js)   │  │  (Next.js)   │  │  (REST API)  │          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│         │                 │                 │                  │
+│  ┌──────▼─────────────────▼─────────────────▼───────┐          │
+│  │              Application Layer                     │          │
+│  │  (Authentication, Authorization, Business Logic)   │          │
+│  └──────┬────────────────────────────────────────────┘          │
+│         │                                                   │
+│  ┌──────▼───────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   PostgreSQL │  │    Redis     │  │  File Storage│          │
+│  │   Database   │  │    Cache     │  │   (Local/S3) │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 1.1 External Actors
+
+**End Users**
+- Access web application via browser
+- Authenticate with credentials
+- Interact with dashboard and features
+- Manage their workspace data
+
+**Admin Users**
+- Access admin interface
+- Manage users and permissions
+- Configure system settings
+- Monitor system health
+
+**External Services**
+- reCAPTCHA (Google) - Bot protection
+- Email Service (SendGrid/AWS SES) - Notifications
+- AI Providers (OpenAI/Anthropic) - AI features
+- Storage Services (S3/R2) - Media storage
+
+---
+
+## 2. Container Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      Container Runtime                          │
+│                    (Docker / Podman)                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │                  Reverse Proxy (Optional)                 │  │
+│  │                    Nginx / Traefik                        │  │
+│  │              Port 80/443 → Port 3000                      │  │
+│  └────────────────────────┬─────────────────────────────────┘  │
+│                           │                                     │
+│  ┌────────────────────────▼─────────────────────────────────┐  │
+│  │              Next.js Application Container                │  │
+│  │                   Port 3000                               │  │
+│  │  - Web Application                                        │  │
+│  │  - Admin Interface                                        │  │
+│  │  - API Routes                                              │  │
+│  │  - Server Components                                       │  │
+│  └────────────────────────┬─────────────────────────────────┘  │
+│                           │                                     │
+│  ┌────────────────────────┼─────────────────────────────────┐  │
+│  │                        │                                 │  │
+│  ┌────────▼────────┐  ┌───▼──────┐  ┌────────▼────────┐     │  │
+│  │   PostgreSQL    │  │  Redis   │  │  File Storage   │     │  │
+│  │   Container     │  │ Container│  │  (Volume Mount) │     │  │
+│  │   Port 5432     │  │ Port 6379│  │                 │     │  │
+│  └─────────────────┘  └──────────┘  └─────────────────┘     │  │
+│                                                           │  │
+└───────────────────────────────────────────────────────────┘  │
+```
+
+### 2.1 Container Descriptions
+
+**Next.js Application Container**
+- Runtime: Node.js 18+ or Bun
+- Port: 3000
+- Purpose: Host the Next.js application
+- Dependencies: PostgreSQL, Redis
+- Volumes: File storage mount
+
+**PostgreSQL Container**
+- Image: postgres:15-alpine
+- Port: 5432
+- Purpose: Primary database
+- Data: Persistent volume
+- Backups: Automated backup strategy
+
+**Redis Container**
+- Image: redis:7-alpine
+- Port: 6379
+- Purpose: Caching and session storage
+- Persistence: Optional (depends on use case)
+- Data: Volatile or persistent
+
+**Reverse Proxy Container (Optional)**
+- Image: nginx:alpine or traefik
+- Ports: 80, 443
+- Purpose: SSL termination, load balancing
+- Configuration: Dynamic routing
+
+---
+
+## 3. Component Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Presentation Layer                        │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   Pages      │  │  Components  │  │   Layouts    │          │
+│  │  (App Router)│  │  (Shadcn/ui) │  │  (Root/Dash) │          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│         │                 │                 │                  │
+└─────────┼─────────────────┼─────────────────┼──────────────────┘
+          │                 │                 │
+┌─────────┼─────────────────┼─────────────────┼──────────────────┐
+│         │              Application Layer                          │
+│  ┌──────▼───────┐  ┌──────▼───────┐  ┌──────▼───────┐          │
+│  │   Server     │  │   Client     │  │   API Routes │          │
+│  │ Components   │  │ Components   │  │  (REST API)  │          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│         │                 │                 │                  │
+│  ┌──────▼─────────────────▼─────────────────▼───────┐          │
+│  │              Business Logic Layer               │          │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐     │          │
+│  │  │   Auth   │  │   RBAC   │  │  Multi-  │     │          │
+│  │  │ Service  │  │ Service  │  │  Tenant  │     │          │
+│  │  └──────────┘  └──────────┘  └──────────┘     │          │
+│  └────────────────────────────────────────────────┘          │
+│         │                                                   │
+└─────────┼───────────────────────────────────────────────────┘
+          │
+┌─────────┼───────────────────────────────────────────────────┐
+│         │                  Data Access Layer                 │
+│  ┌──────▼───────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   Database   │  │     Cache     │  │   Storage    │          │
+│  │   Service    │  │   Service     │  │   Service    │          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│         │                 │                 │                  │
+│  ┌──────▼───────┐  ┌──────▼───────┐  ┌──────▼───────┐          │
+│  │ PostgreSQL   │  │    Redis     │  │  File System │          │
+│  │   (Prisma)   │  │              │  │   / S3       │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 3.1 Component Descriptions
+
+**Presentation Layer**
+- **Pages**: Next.js App Router pages (server and client components)
+- **Components**: Reusable UI components (Shadcn/ui)
+- **Layouts**: Page layouts (root, dashboard, auth)
+
+**Application Layer**
+- **Server Components**: React Server Components for performance
+- **Client Components**: Interactive components with state
+- **API Routes**: REST API endpoints
+
+**Business Logic Layer**
+- **Auth Service**: Authentication and session management
+- **RBAC Service**: Role-based access control
+- **Multi-Tenant Service**: Workspace and organization management
+
+**Data Access Layer**
+- **Database Service**: Database queries via Prisma ORM
+- **Cache Service**: Redis caching operations
+- **Storage Service**: File storage operations
+
+---
+
+## 4. Request Flow
+
+### 4.1 Page Request Flow
+
+```
+User Request
+    │
+    ▼
+┌───────────────┐
+│   Browser     │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Reverse Proxy │ (Optional)
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Next.js App   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Middleware    │
+│ (Auth/RBAC)   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Server Comp.  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Data Fetching │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Cache Check   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Database Query│
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Response      │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ HTML Render   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Client Hydrate│
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Interactive   │
+└───────────────┘
+```
+
+### 4.2 API Request Flow
+
+```
+Client Request
+    │
+    ▼
+┌───────────────┐
+│ API Route      │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Rate Limit    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Auth Check     │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ RBAC Check     │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Validation     │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Business Logic│
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Cache Check    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Database      │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Response      │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ JSON Return   │
+└───────────────┘
+```
+
+---
+
+## 5. Authentication Flow
+
+### 5.1 Login Flow
+
+```
+User enters credentials
+    │
+    ▼
+┌───────────────┐
+│ reCAPTCHA     │
+│ Validation    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ API: /api/auth │
+│ /callback/    │
+│ credentials   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Rate Limit    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Validate      │
+│ Credentials   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ bcrypt Verify │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Create Session│
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Generate JWT  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Set Secure    │
+│ Cookie        │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Redirect to   │
+│ Dashboard     │
+└───────────────┘
+```
+
+### 5.2 Session Validation Flow
+
+```
+Protected Route Access
+    │
+    ▼
+┌───────────────┐
+│ Middleware     │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Check Session │
+│ Cookie        │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Validate JWT  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Get User Data │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Check Role    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Allow/Deny    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Continue/     │
+│ Redirect      │
+└───────────────┘
+```
+
+---
+
+## 6. RBAC Flow
+
+### 6.1 Permission Check Flow
+
+```
+Resource Access Request
+    │
+    ▼
+┌───────────────┐
+│ Get User Role │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Get Role      │
+│ Permissions   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Check Resource│
+│ Permission    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Check Action  │
+│ Permission    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Allow/Deny    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Log Access    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Return Result │
+└───────────────┘
+```
+
+---
+
+## 7. CMS Publishing Flow
+
+### 7.1 Content Creation Flow
+
+```
+Author Creates Content
+    │
+    ▼
+┌───────────────┐
+│ Draft Status  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Save Version  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Generate Slug │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Upload Media  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Set Metadata  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Submit for    │
+│ Review        │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Review Status │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Approve/Reject│
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Publish       │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Invalidate    │
+│ Cache         │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Update Sitemap│
+└───────────────┘
+```
+
+---
+
+## 8. Media Upload Flow
+
+### 8.1 File Upload Flow
+
+```
+User Selects File
+    │
+    ▼
+┌───────────────┐
+│ Client Validate│
+│ (Size, Type)  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Upload to API │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Server Validate│
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Generate      │
+│ Filename      │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Optimize Image│
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Store in      │
+│ Storage       │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Create Record │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Return URL    │
+└───────────────┘
+```
+
+---
+
+## 9. AI Request Flow
+
+### 9.1 AI Integration Flow
+
+```
+User Request AI Feature
+    │
+    ▼
+┌───────────────┐
+│ API Route     │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Auth Check    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Rate Limit    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Provider      │
+│ Selection     │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Format Prompt │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Call Provider │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Stream/Wait   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Parse Response │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Log Request   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Cache Result  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Return to User│
+└───────────────┘
+```
+
+---
+
+## 10. Database Flow
+
+### 10.1 Query Flow
+
+```
+Application Request
+    │
+    ▼
+┌───────────────┐
+│ Cache Check   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Cache Hit?    │
+└───────┬───────┘
+        │
+    ┌───┴───┐
+    │       │
+   Yes     No
+    │       │
+    ▼       ▼
+┌───────┐ ┌───────────────┐
+│Return │ │ Prisma Query  │
+│Cache  │ └───────┬───────┘
+└───────┘         │
+                  ▼
+          ┌───────────────┐
+          │ PostgreSQL    │
+          └───────┬───────┘
+                  │
+                  ▼
+          ┌───────────────┐
+          │ Parse Results │
+          └───────┬───────┘
+                  │
+                  ▼
+          ┌───────────────┐
+          │ Cache Store   │
+          └───────┬───────┘
+                  │
+                  ▼
+          ┌───────────────┐
+          │ Return Data   │
+          └───────────────┘
+```
+
+---
+
+## 11. Caching Flow
+
+### 11.1 Cache Strategy Flow
+
+```
+Data Request
+    │
+    ▼
+┌───────────────┐
+│ Generate Key  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Check Redis   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Cache Hit?    │
+└───────┬───────┘
+        │
+    ┌───┴───┐
+    │       │
+   Yes     No
+    │       │
+    ▼       ▼
+┌───────┐ ┌───────────────┐
+│Return │ │ Fetch from DB │
+│Cache  │ └───────┬───────┘
+└───────┘         │
+                  ▼
+          ┌───────────────┐
+          │ Set Cache     │
+          │ (with TTL)    │
+          └───────┬───────┘
+                  │
+                  ▼
+          ┌───────────────┐
+          │ Return Data   │
+          └───────────────┘
+```
+
+### 11.2 Cache Invalidation Flow
+
+```
+Data Update
+    │
+    ▼
+┌───────────────┐
+│ Update DB     │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Generate Keys │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Delete from   │
+│ Redis         │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Log Invalidation│
+└───────────────┘
+```
+
+---
+
+## 12. Deployment Flow
+
+### 12.1 Local Development Flow
+
+```
+Developer Machine
+    │
+    ▼
+┌───────────────┐
+│ git clone     │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ bun install   │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ .env setup    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ docker-compose │
+│ up            │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ bun dev       │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ http://localhost:3000
+└───────────────┘
+```
+
+### 12.2 Production Deployment Flow
+
+```
+Code Push to Main
+    │
+    ▼
+┌───────────────┐
+│ GitHub Actions│
+│ CI/CD Trigger │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Run Tests     │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Build Docker  │
+│ Image         │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Push to       │
+│ Registry      │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Deploy to     │
+│ Production    │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Health Check  │
+└───────┬───────┘
+        │
+        ▼
+┌───────────────┐
+│ Rollback if   │
+│ Failed        │
+└───────────────┘
+```
+
+---
+
+## 13. Folder Philosophy
+
+### 13.1 Feature-First Structure
+
+The codebase follows a **feature-first** organization rather than a technical-layer separation. This means:
+
+- Code is organized by business features (auth, dashboard, cms, etc.)
+- Each feature contains its own components, hooks, and utilities
+- Shared utilities are kept in a dedicated lib folder
+- This improves discoverability and reduces cognitive load
+
+### 13.2 Server-First Approach
+
+- Prefer Server Components over Client Components
+- Use Client Components only for interactivity
+- Minimize client-side JavaScript
+- Leverage Next.js server capabilities
+
+### 13.3 Type Safety
+
+- TypeScript strict mode enabled
+- All functions have explicit types
+- No `any` types allowed
+- Zod for runtime validation
+
+---
+
+## 14. Scalability Strategy
+
+### 14.1 Horizontal Scaling
+
+- Stateless application design
+- Session storage in Redis
+- Database connection pooling
+- Load balancer support
+
+### 14.2 Vertical Scaling
+
+- Efficient resource usage
+- Code splitting
+- Image optimization
+- Caching strategy
+
+### 14.3 Database Scaling
+
+- Read replicas (future)
+- Connection pooling
+- Query optimization
+- Index strategy
+
+### 14.4 Cache Scaling
+
+- Redis clustering (future)
+- Cache partitioning
+- TTL optimization
+- Cache warming
+
+---
+
+## 15. Future Microservice Migration Path
+
+### 15.1 Monolith to Microservices
+
+The current architecture is designed to support future migration to microservices:
+
+**Phase 1: Modular Monolith**
+- Clear module boundaries
+- Shared interfaces
+- Independent testing
+
+**Phase 2: Service Extraction**
+- Extract authentication service
+- Extract CMS service
+- Extract AI service
+
+**Phase 3: Event-Driven**
+- Introduce message queue
+- Event sourcing
+- Async processing
+
+**Phase 4: Full Microservices**
+- Independent deployments
+- Service mesh
+- Distributed tracing
+
+### 15.2 Migration Considerations
+
+- Database per service (future)
+- API Gateway (future)
+- Service discovery (future)
+- Circuit breakers (future)
+- Distributed transactions (future)
+
+---
+
+## 16. Technology Decisions
+
+### 16.1 Next.js 16
+
+**Rationale:**
+- Latest App Router with React 19
+- Server Components for performance
+- Built-in optimization
+- Strong community support
+
+### 16.2 TypeScript
+
+**Rationale:**
+- Type safety
+- Better IDE support
+- Catch errors at compile time
+- Improved maintainability
+
+### 16.3 PostgreSQL
+
+**Rationale:**
+- ACID compliance
+- Complex queries support
+- JSON support
+- Strong ecosystem
+
+### 16.4 Redis
+
+**Rationale:**
+- Fast in-memory storage
+- Caching capabilities
+- Session storage
+- Pub/sub support
+
+### 16.5 Prisma ORM
+
+**Rationale:**
+- Type-safe database access
+- Migration management
+- Excellent TypeScript support
+- Developer experience
+
+---
+
+## 17. Security Considerations
+
+### 17.1 Authentication Security
+
+- bcrypt with 12 salt rounds
+- Secure HTTP-only cookies
+- JWT token expiration
+- CSRF protection
+- Rate limiting
+
+### 17.2 Data Security
+
+- Input validation
+- Output encoding
+- SQL injection prevention
+- XSS prevention
+- Environment variable secrets
+
+### 17.3 Network Security
+
+- TLS encryption
+- CORS configuration
+- Security headers
+- API rate limiting
+
+---
+
+## 18. Monitoring & Observability
+
+### 18.1 Logging
+
+- Structured logging (Winston/Pino)
+- Request logging
+- Error logging
+- Performance metrics
+
+### 18.2 Metrics
+
+- Response times
+- Error rates
+- Request counts
+- Cache hit rates
+
+### 18.3 Tracing
+
+- Request tracing (future)
+- Distributed tracing (future)
+- Performance profiling
+
+---
+
+## 19. Backup & Disaster Recovery
+
+### 19.1 Database Backups
+
+- Daily automated backups
+- Point-in-time recovery
+- Backup retention policy
+- Cross-region replication (future)
+
+### 19.2 File Storage Backups
+
+- Versioned storage
+- Replication strategy
+- Backup verification
+- Restore testing
+
+### 19.3 Disaster Recovery
+
+- RTO (Recovery Time Objective): 4 hours
+- RPO (Recovery Point Objective): 1 hour
+- Failover procedure
+- Documentation maintenance
+
+---
+
+## Appendix
+
+### A. Sequence Diagrams
+
+Detailed sequence diagrams for key flows are available in:
+- [authentication-flow.md](./authentication-flow.md)
+- [authorization-rbac.md](./authorization-rbac.md)
+- [multi-tenancy.md](./multi-tenancy.md)
+
+### B. Data Flow Diagrams
+
+Detailed data flow diagrams are available in:
+- [database-design.md](./database-design.md)
+- [caching-strategy.md](./caching-strategy.md)
+
+### C. Change Log
+
+| Version | Date | Changes | Author |
+|---------|------|---------|--------|
+| 1.0.0 | 2026-06-07 | Initial SDD creation | System |

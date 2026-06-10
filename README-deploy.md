@@ -1,5 +1,5 @@
 #  Deployment Guide
-### *Production Deployment for Next.js 16 Project Engine*
+### *Production Deployment for NovaStack*
 
 This guide covers all deployment options and configurations for taking your Next.js 16 application to production.
 
@@ -186,7 +186,7 @@ source ~/.bashrc
 
 # Clone repository
 git clone your-repo-url
-cd next-js-16-project-engine
+cd novastack
 
 # Install dependencies
 bun install
@@ -272,7 +272,7 @@ source ~/.bashrc
 
 # Setup application
 git clone your-repo-url
-cd next-js-16-project-engine
+cd novastack
 bun install
 bun run build
 
@@ -321,7 +321,7 @@ source ~/.bashrc
 
 # 2. Clone and build
 git clone your-repo-url
-cd next-js-16-project-engine
+cd novastack
 bun install
 bun run build
 
